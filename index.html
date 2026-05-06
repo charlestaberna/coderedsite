@@ -1,0 +1,2145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TEAM CODE-RED</title>
+<link rel="icon" href="logo.png" type="image/x-icon">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ─── RESET & BASE ─────────────────────────────────────────── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --red: #ff0000;
+  --red2: #ff0000;
+  --red3: #cc0000;
+  --dark: #080000;
+  --dark2: #120000;
+  --mono: 'Share Tech Mono', monospace;
+  --display: 'Orbitron', monospace;
+  --body: 'Rajdhani', sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--dark);
+  color: #fff;
+  font-family: var(--body);
+  overflow-x: hidden;
+  cursor: none;
+}
+
+/* ─── CUSTOM CURSOR ────────────────────────────────────────── */
+.cursor {
+  position: fixed;
+  width: 12px; height: 12px;
+  background: var(--red);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  transition: transform 0.1s, width 0.2s, height 0.2s;
+  mix-blend-mode: screen;
+}
+.cursor-ring {
+  position: fixed;
+  width: 36px; height: 36px;
+  border: 1px solid rgba(255,0,0,0.5);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9998;
+  transform: translate(-50%, -50%);
+  transition: transform 0.15s, width 0.3s, height 0.3s;
+}
+
+/* ─── MATRIX CANVAS ────────────────────────────────────────── */
+#matrixCanvas {
+  position: fixed;
+  top: 0; left: 0;
+  z-index: -1;
+  opacity: 0.18;
+}
+
+/* ─── SCANLINES ────────────────────────────────────────────── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.08) 2px,
+    rgba(0,0,0,0.08) 4px
+  );
+  pointer-events: none;
+  z-index: 9990;
+}
+/* ── NAVBAR ─────────────────────────────────── */
+nav.topbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 1000;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  background: rgba(4,0,0,0.94);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(14px);
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+
+.nav-logo-ring {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--red);
+  background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 0 14px var(--red-glow);
+}
+
+.nav-logo-ring img {
+  width: 115%; height: 115%;
+  object-fit: contain;
+}
+
+.nav-brand-text {
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  color: #fff;
+  line-height: 1.1;
+}
+
+.nav-brand-text small {
+  display: block;
+  font-size: 8px;
+  color: var(--red);
+  letter-spacing: 4px;
+  font-weight: 400;
+}
+
+.nav-links {
+  display: flex;
+  gap: 2px;
+  list-style: none;
+}
+
+.nav-links a {
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-decoration: none;
+  padding: 7px 14px;
+  border-radius: 3px;
+  transition: color .2s, background .2s;
+  position: relative;
+}
+
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  bottom: 2px; left: 14px; right: 14px;
+  height: 1px;
+  background: var(--red);
+  transform: scaleX(0);
+  transition: transform .2s;
+}
+
+.nav-links a:hover { color: #fff; }
+.nav-links a:hover::after { transform: scaleX(1); }
+.nav-links a.active { color: var(--red); background: var(--surface); }
+
+
+/* Hamburger */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+  padding: 6px;
+}
+
+.hamburger span {
+  display: block;
+  width: 24px; height: 2px;
+  background: var(--red);
+  transition: all 0.3s;
+}
+
+.hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger.open span:nth-child(2) { opacity: 0; }
+.hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* ─── TOP NAV ───────────────────────────── */
+.topnav {
+  background: rgba(5, 0, 0, 0.95);
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+
+  /* ADD THIS ↓ */
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* LINKS */
+.topnav a {
+  color: rgba(255,255,255,0.75);
+  text-decoration: none;
+  padding: 12px 16px;
+  font-family: 'Share Tech Mono', monospace;
+  letter-spacing: 2px;
+  font-size: 13px;
+  position: relative;
+  transition: 0.3s;
+}
+
+.topnav a:hover {
+  color: #fff;
+  text-shadow: 0 0 10px rgba(255,0,0,0.4);
+}
+
+/* ACTIVE */
+.topnav a.active {
+  color: red;
+  text-shadow: 0 0 10px red;
+}
+
+/* ─── DROPDOWN ───────────────────────────── */
+.dropdown {
+  position: relative;
+}
+
+.dropbtn {
+  cursor: pointer;
+}
+
+/* MENU */
+.dropdown-content {
+  display: none;
+  position: absolute;
+  top: 45px;
+  background: rgba(10,0,0,0.98);
+  min-width: 30px;
+  border: 1px solid rgba(255,0,0,0.3);
+  box-shadow: 0 0 20px rgba(255,0,0,0.2);
+  flex-direction: column;
+  z-index: 999;
+}
+
+/* SHOW */
+.dropdown-content.show {
+  display: flex;
+}
+
+/* DROPDOWN LINKS */
+.dropdown-content a {
+  padding: 12px 14px;
+  color: rgba(255,255,255,0.7);
+  text-decoration: none;
+  font-size: 12px;
+  border-left: 2px solid transparent;
+  transition: 0.25s;
+}
+
+.dropdown-content a:hover {
+  background: rgba(255,0,0,0.08);
+  border-left: 2px solid red;
+  color: #fff;
+  padding-left: 20px;
+}
+
+/* ARROW */
+.arrow {
+  display: inline-block;
+  transition: 0.3s;
+}
+
+.arrow.rotate {
+  transform: rotate(180deg);
+}
+
+/* ─── RESPONSIVE ─────────────────────────── */
+@media (max-width: 768px) {
+  .topnav {
+    flex-wrap: wrap;
+  }
+
+  .dropdown-content {
+    position: static;
+    width: 100%;
+  }
+}
+
+/* ─── HERO ─────────────────────────────────────────────────── */
+#home {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100px 40px 60px;
+  position: relative;
+  text-align: center;
+}
+
+.hero-eyebrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 5px;
+  color: var(--red2);
+  margin-bottom: 20px;
+  animation: fadeUp 0.8s ease both;
+}
+
+.hero-title {
+  font-family: var(--display);
+  font-size: clamp(42px, 9vw, 100px);
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -2px;
+  margin-bottom: 6px;
+  animation: fadeUp 0.8s 0.1s ease both;
+}
+
+.hero-title .team { color: rgba(255,255,255,0.15); }
+.hero-title .code { color: #fff; }
+
+.hero-title .red-word {
+  color: var(--red);
+  text-shadow:
+    0 0 20px rgba(255,0,0,0.6),
+    0 0 40px rgba(255,0,0,0.3);
+  animation: redPulse 3s ease-in-out infinite;
+}
+
+@keyframes redPulse {
+  0%, 100% { text-shadow: 0 0 20px rgba(255,0,0,0.6), 0 0 40px rgba(255,0,0,0.3); }
+  50% { text-shadow: 0 0 40px rgba(255,0,0,0.9), 0 0 80px rgba(255,0,0,0.5), 0 0 120px rgba(255,0,0,0.2); }
+}
+
+.hero-sub {
+  font-family: var(--body);
+  font-size: clamp(14px, 2vw, 18px);
+  color: rgba(255,255,255,0.45);
+  letter-spacing: 1px;
+  margin-bottom: 50px;
+  animation: fadeUp 0.8s 0.2s ease both;
+}
+
+.hero-img-wrap {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 50px;
+  animation: fadeUp 0.8s 0.3s ease both;
+}
+
+.hero-img-wrap img {
+  width: min(1200px, 85vw);
+  height: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(255,0,0,0.4);
+  display: block;
+}
+
+.hero-img-wrap::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--red), transparent, var(--red));
+  z-index: -1;
+  opacity: 0.5;
+  animation: rotateBorder 4s linear infinite;
+}
+
+@keyframes rotateBorder {
+  0% { background: linear-gradient(0deg, var(--red), transparent, var(--red3)); }
+  100% { background: linear-gradient(360deg, var(--red), transparent, var(--red3)); }
+}
+
+.hero-img-glow {
+  position: absolute;
+  inset: -30px;
+  background: radial-gradient(ellipse, rgba(255,0,0,0.15) 0%, transparent 70%);
+  border-radius: 50%;
+  z-index: -2;
+  animation: breathe 4s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+.hero-btns {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  animation: fadeUp 0.8s 0.4s ease both;
+}
+
+.btn-primary {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #000;
+  background: var(--red);
+  border: 2px solid var(--red);
+  padding: 14px 32px;
+  border-radius: 4px;
+  text-decoration: none;
+  transition: all 0.25s;
+  display: inline-block;
+}
+
+.btn-primary:hover {
+  background: #ff3333;
+  box-shadow: 0 0 30px rgba(255,0,0,0.6);
+  letter-spacing: 3px;
+}
+
+.btn-outline {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #fff;
+  background: transparent;
+  border: 2px solid rgba(255,255,255,0.2);
+  padding: 14px 32px;
+  border-radius: 4px;
+  text-decoration: none;
+  transition: all 0.25s;
+  display: inline-block;
+}
+
+.btn-outline:hover {
+  border-color: var(--red);
+  color: var(--red);
+  box-shadow: 0 0 20px rgba(255,0,0,0.2);
+  letter-spacing: 3px;
+}
+
+/* Scroll indicator */
+.scroll-hint {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.4;
+  animation: bounce 2s ease-in-out infinite;
+}
+
+.scroll-hint span {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--red2);
+}
+
+.scroll-hint::after {
+  content: '';
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(to bottom, var(--red), transparent);
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(8px); }
+}
+
+/* ─── SECTION BASE ─────────────────────────────────────────── */
+.section {
+  padding: 100px 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 5px;
+  color: var(--red2);
+  margin-bottom: 12px;
+  display: block;
+}
+
+.section-title {
+  font-family: var(--display);
+  font-size: clamp(28px, 4vw, 48px);
+  font-weight: 700;
+  line-height: 1.1;
+  margin-bottom: 16px;
+  color: #fff;
+}
+
+.section-title span { color: var(--red); }
+
+.section-line {
+  width: 60px;
+  height: 2px;
+  background: var(--red);
+  margin-bottom: 50px;
+  box-shadow: 0 0 8px rgba(255,0,0,0.6);
+}
+
+/* Section divider */
+.divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,0,0,0.3), transparent);
+  margin: 0;
+}
+
+/* ─── ABOUT ────────────────────────────────────────────────── */
+#about .about-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+}
+
+#about .about-text p {
+  font-size: 16px;
+  line-height: 1.8;
+  color: rgba(255,255,255,0.65);
+  margin-bottom: 16px;
+  font-family: var(--body);
+}
+
+#about .about-text p strong {
+  color: var(--red2);
+  font-weight: 600;
+}
+
+.about-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.stat-card {
+  background: rgba(255,0,0,0.04);
+  border: 1px solid rgba(255,0,0,0.15);
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+  transition: all 0.3s;
+}
+
+.stat-card:hover {
+  background: rgba(255,0,0,0.08);
+  border-color: rgba(255,0,0,0.4);
+  box-shadow: 0 0 20px rgba(255,0,0,0.1);
+}
+
+.stat-number {
+  font-family: var(--display);
+  font-size: 36px;
+  font-weight: 900;
+  color: var(--red);
+  display: block;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.stat-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+}
+
+.team-single {
+  padding: 100px 20px;
+  background: rgba(255, 0, 0, 0.03);
+  text-align: center;
+}
+
+.team-overlay {
+  max-width: 1000px;
+  margin: auto;
+}
+
+.team-image-box {
+  margin-top: 30px;
+}
+
+.team-image-box img {
+  width: 100%;
+  max-width: 1100px;
+  border-radius: 20px;
+  border: 2px solid red;
+  box-shadow: 0 0 25px rgba(255,0,0,0.5);
+}
+
+.team-desc {
+  margin-top: 20px;
+  font-size: 18px;
+  color: #fff;
+  opacity: 0.9;
+}
+
+.section-label {
+  color: red;
+  font-size: 14px;
+  letter-spacing: 2px;
+}
+
+.section-title {
+  font-size: 40px;
+  color: white;
+}
+
+.section-title span {
+  color: red;
+}
+
+.section-line {
+  width: 80px;
+  height: 3px;
+  background: red;
+  margin: 10px auto;
+}
+
+/* ─── PROJECTS / GALLERY COMBINED ─────────────────────────── */
+/* ─── PROJECTS / GALLERY FULL CSS (NORMAL PHOTO FIT) ───────────────── */
+
+/* GRID LAYOUT */
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+  margin-top: 40px;
+}
+
+/* CARD */
+.project-card {
+  background: rgba(10, 0, 0, 0.92);
+  border: 1px solid rgba(255, 0, 0, 0.12);
+  border-radius: 18px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+  transition: transform 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease;
+}
+
+.project-card:hover {
+  border-color: rgba(255, 0, 80, 0.4);
+  transform: translateY(-8px);
+  box-shadow: 0 18px 34px rgba(255, 0, 60, 0.25);
+}
+
+/* ─── IMAGE CONTAINER ─────────────────────────────────────── */
+.project-img,
+.project-img.gallery-card {
+  width: 100%;
+  height: 220px;
+  overflow: hidden;
+  border-radius: 18px 18px 0 0;
+  background: #111;
+  position: relative;
+  border-bottom: 2px solid red;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* NORMAL IMAGE DISPLAY */
+.project-img img,
+.project-img.gallery-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* full image visible */
+  padding: 8px;
+  background: #111;
+  transition: filter 0.4s ease;
+}
+
+/* REMOVE ZOOM, KEEP CLEAN */
+.project-card:hover .project-img img,
+.project-card:hover .project-img.gallery-card img {
+  transform: none;
+  filter: brightness(1.05);
+}
+
+/* SUBTLE FRAME */
+.project-img::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  pointer-events: none;
+}
+
+/* ─── BODY ────────────────────────────────────────────────── */
+/* ─── DARK CYBER GALLERY CARD (CB-STYLE LAYOUT, ORIGINAL COLORS) ─── */
+
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 24px;
+  justify-items: center;
+}
+
+/* CARD */
+.project-card {
+  width: 230px;
+  background: rgba(10, 0, 0, 0.92);
+  border: 1px solid rgba(255, 0, 0, 0.15);
+  border-radius: 15px;
+  overflow: hidden;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  transition: 0.3s ease;
+}
+
+/* HOVER */
+.project-card:hover {
+  transform: translateY(-8px);
+  border-color: rgba(255, 0, 0, 0.4);
+  box-shadow: 0 10px 25px rgba(255, 0, 0, 0.15);
+}
+
+/* IMAGE */
+.project-img {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  border-bottom: 2px solid red;
+  background: #111;
+}
+
+.project-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+/* IMAGE HOVER */
+.project-card:hover .project-img img {
+  transform: scale(1.08);
+}
+
+/* TEXT AREA */
+.project-body {
+  padding: 15px;
+}
+
+/* TAG */
+.project-tag {
+  display: inline-block;
+  font-size: 10px;
+  color: var(--red2);
+  border: 1px solid rgba(255, 0, 0, 0.3);
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-bottom: 10px;
+  font-family: var(--mono);
+  letter-spacing: 1px;
+}
+
+/* TITLE */
+.project-title {
+  font-size: 16px;
+  color: #fff;
+  margin-bottom: 10px;
+  font-family: var(--display);
+}
+
+/* DESCRIPTION */
+.project-desc {
+  font-size: 13px;
+  color: rgba(255,255,255,0.6);
+  line-height: 1.6;
+  margin-bottom: 15px;
+  font-family: var(--body);
+}
+
+/* LINK */
+.project-link {
+  font-size: 10px;
+  color: var(--red2);
+  text-decoration: none;
+  font-family: var(--mono);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.project-link:hover {
+  color: #fff;
+}
+/* ─── SECTION HEADER ──────────────────────────────────────── */
+.section-label {
+  color: #ff0000;
+  font-size: 0.9rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.section-title {
+  font-size: 2rem;
+  color: #fff;
+  margin: 10px 0;
+}
+
+.section-title span {
+  color: #ff0000;
+}
+
+.section-line {
+  width: 80px;
+  height: 3px;
+  background: linear-gradient(to right, #ff2e63, transparent);
+  margin-top: 10px;
+  border-radius: 10px;
+}
+
+/* ─── RESPONSIVE ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .projects-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .project-img {
+    height: 200px;
+  }
+
+  .section-title {
+    font-size: 1.8rem;
+  }
+}
+
+/* ─── CODE EDITOR ──────────────────────────────────────────── */
+#playground {
+  background: rgba(255,0,0,0.02);
+}
+
+.editor-wrap {
+  background: rgba(5,0,0,0.95);
+  border: 1px solid rgba(255,0,0,0.25);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 0 60px rgba(255,0,0,0.06);
+}
+
+.editor-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: rgba(255,0,0,0.05);
+  border-bottom: 1px solid rgba(255,0,0,0.15);
+}
+
+.editor-dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+}
+
+.editor-dot.r { background: var(--red); }
+.editor-dot.y { background: #ffd600; }
+.editor-dot.g { background: #00d26a; }
+
+.editor-filename {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: rgba(255,255,255,0.3);
+  margin-left: 8px;
+  letter-spacing: 1px;
+}
+
+.editor-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.editor-pane {
+  padding: 20px;
+}
+
+.editor-pane:first-child {
+  border-right: 1px solid rgba(255,0,0,0.1);
+}
+
+.editor-pane label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--red2);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.editor-pane textarea {
+  width: 100%;
+  height: 220px;
+  background: transparent;
+  color: #fe0808;
+  border: none;
+  outline: none;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.6;
+  resize: vertical;
+  caret-color: var(--red);
+}
+
+.editor-pane iframe {
+  width: 100%;
+  height: 220px;
+  border: none;
+  background: #fff;
+  border-radius: 6px;
+}
+
+.editor-footer {
+  padding: 14px 20px;
+  border-top: 1px solid rgba(255,0,0,0.1);
+  display: flex;
+  gap: 12px;
+}
+
+.run-btn {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #000;
+  background: var(--red);
+  border: none;
+  padding: 10px 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.run-btn:hover {
+  background: #f00606;
+  box-shadow: 0 0 20px rgba(255,0,0,0.5);
+}
+
+.clear-btn {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 10px 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.clear-btn:hover {
+  border-color: rgba(255,0,0,0.3);
+  color: var(--red2);
+}
+
+/* ─── CONTACT ──────────────────────────────────────────────── */
+.contact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: start;
+}
+
+.contact-info p {
+  font-size: 15px;
+  line-height: 1.8;
+  color: rgba(255,255,255,0.55);
+  margin-bottom: 30px;
+  font-family: var(--body);
+}
+
+.contact-links {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.contact-link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-decoration: none;
+  color: rgba(255,255,255,0.6);
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 1px;
+  padding: 14px 18px;
+  border: 1px solid rgba(255,0,0,0.1);
+  border-radius: 6px;
+  transition: all 0.25s;
+}
+
+.contact-link:hover {
+  color: #fff;
+  border-color: rgba(255, 0, 0, 0.914);
+  background: rgba(255,0,0,0.05);
+  padding-left: 24px;
+}
+
+.contact-link-icon {
+  font-size: 18px;
+  width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--red2);
+  text-transform: uppercase;
+}
+
+.form-group input,
+.form-group textarea {
+  background: rgba(255,0,0,0.03);
+  border: 1px solid rgba(255,0,0,0.15);
+  border-radius: 6px;
+  color: #fff;
+  font-family: var(--mono);
+  font-size: 13px;
+  padding: 12px 16px;
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  border-color: rgba(255, 0, 0, 0.896);
+  background: rgba(255,0,0,0.05);
+}
+
+.form-group textarea {
+  height: 120px;
+  resize: vertical;
+}
+
+/* ─── FOOTER ───────────────────────────────────────────────── */
+footer {
+  border-top: 1px solid rgba(255, 0, 0, 0.941);
+  padding: 40px;
+  text-align: center;
+  background: rgba(0,0,0,0.6);
+}
+
+.footer-logo {
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--red);
+  letter-spacing: 4px;
+  margin-bottom: 10px;
+  text-shadow: 0 0 20px rgba(255, 5, 5, 0.977);
+}
+
+.footer-sub {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: rgba(255,255,255,0.2);
+  margin-bottom: 24px;
+}
+
+.footer-links {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.footer-links a {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,0.3);
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+
+.footer-links a:hover { color: var(--red2); }
+
+.footer-copy {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: rgba(255,255,255,0.15);
+  letter-spacing: 1px;
+}
+
+/* ─── ANIMATIONS ───────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ─── RESPONSIVE ───────────────────────────────────────────── */
+@media (max-width: 768px) {
+  nav { padding: 0 20px; }
+  .nav-links { display: none; }
+  .hamburger { display: flex; }
+
+  #home { padding: 100px 20px 60px; }
+  .section { padding: 70px 20px; }
+
+  #about .about-grid { grid-template-columns: 1fr; gap: 40px; }
+  .about-stats { grid-template-columns: 1fr 1fr; }
+
+  .editor-body { grid-template-columns: 1fr; }
+  .editor-pane:first-child { border-right: none; border-bottom: 1px solid rgba(255,0,0,0.1); }
+
+  .contact-grid { grid-template-columns: 1fr; gap: 40px; }
+
+  footer { padding: 30px 20px; }
+}
+
+@media (max-width: 480px) {
+  .about-stats { grid-template-columns: 1fr; }
+  .hero-btns { flex-direction: column; align-items: center; }
+}
+
+.padrogani{
+display: flex;
+  justify-content: center;       /* Center horizontally */
+  padding: 2em;
+  margin: 2em auto;
+
+}
+
+.padrogani-content{
+  display: flex;                  /* Side by side */
+  align-items: 1px;            /* Vertically center text */
+  justify-content: center;        /* Center horizontally */
+  gap: 20px;                      /* Space between image and text */
+  padding: 20px;
+  border: 2px solid red;          /* Border around the container */
+  border-radius: 15px;
+  background-image: url("8.png");
+  background-position: center;
+  max-width: 90000px;
+  margin: 2em auto;               /* Center on page */
+}
+
+.padrogani-content img{
+  width: 200px;
+  border-radius: 15px;
+  border: 3px solid red;
+}
+
+.padrogani-text{
+  text-align: left;
+}
+
+.padrogani-text h3{
+  color: white ;
+}
+
+/* Container style */
+.f {
+  max-width: 800px;
+  margin: 50px auto;
+  padding: 30px 35px;
+  border-radius: 20px;
+
+  /* Gradient background (Code Red theme 🔴) */
+  background: linear-gradient(135deg, #000, #ff0000);
+
+  box-shadow: 0 10px 25px rgb(255, 252, 252);
+  text-align: center;
+  font-family: Arial, sans-serif;
+
+  transition: 0.3s;
+}
+
+/* Hover effect */
+.f:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+}
+
+/* Title */
+.f h2 {
+  font-size: 28px;
+  color: #ff0000;
+  margin-bottom: 15px;
+  letter-spacing: 1.5px;
+}
+
+/* Motto quote */
+.f .quote {
+  font-size: 24px;
+  font-weight: bold;
+  color: #000;
+  margin-bottom: 20px;
+  font-style: italic;
+
+  /* Highlight effect */
+  background: rgba(192, 57, 43, 0.1);
+  padding: 10px;
+  border-radius: 10px;
+}
+
+/* Description text */
+.f p {
+  font-size: 19px;
+  color: #fff;
+  line-height: 1.8;
+}
+
+/* Accent line */
+.f::before {
+  content: "";
+  display: block;
+  width: 70px;
+  height: 5px;
+  background: #ff0000;
+  margin: 0 auto 20px;
+  border-radius: 5px;
+}
+
+/* Optional subtle animation */
+.f {
+  animation: fadeIn 0.8s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* NAV BASE */
+.nav-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+
+  background: linear-gradient(90deg, #000, #0a0a0a);
+  border-bottom: 2px solid #ff0000;
+  box-shadow: 0 0 20px #ff0000;
+}
+
+/* NAV ITEMS */
+.nav-links li {
+  position: relative;
+}
+
+/* LINKS */
+.nav-links a {
+  display: block;
+  padding: 14px 18px;
+  color: #ff3b3b;
+  text-decoration: none;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: 0.25s;
+  position: relative;
+}
+
+/* HOVER EFFECT (CODE-RED GLOW) */
+.nav-links a:hover {
+  background: #1a0000;
+  color: #fff;
+  text-shadow: 0 0 10px red;
+  box-shadow: inset 0 0 10px red;
+}
+
+/* ACTIVE PAGE */
+.nav-links a.active {
+  background: red;
+  color: black;
+  font-weight: bold;
+  box-shadow: 0 0 15px red;
+}
+
+/* =========================
+   DROPDOWN MENU
+========================= */
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+
+  background: #050505;
+  min-width: 45px;
+
+  /* 🔥 SCROLL FEATURE */
+  max-height: 240px;
+  overflow-y: auto;
+
+  border: 1px solid red;
+  box-shadow: 0 0 25px red;
+  z-index: 1000;
+}
+
+/* SHOW DROPDOWN */
+.dropdown.show .dropdown-menu {
+  display: block;
+}
+
+/* DROPDOWN ITEMS */
+.dropdown-menu a {
+  padding: 12px 14px;
+  color: #ff3b3b;
+  display: block;
+  border-bottom: 1px solid #1a0000;
+  transition: 0.2s;
+}
+
+/* hover inside dropdown */
+.dropdown-menu a:hover {
+  background: #300000;
+  color: #fff;
+  text-shadow: 0 0 8px red;
+}
+
+/* =========================
+   SCROLLBAR (RED THEME)
+========================= */
+.dropdown-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb {
+  background: red;
+  box-shadow: 0 0 10px red;
+  border-radius: 10px;
+}
+
+.dropdown-menu::-webkit-scrollbar-track {
+  background: black;
+}
+
+/* =========================
+   ARROW ANIMATION
+========================= */
+.arrow {
+  font-size: 12px;
+  margin-left: 5px;
+  transition: 0.3s;
+  color: red;
+}
+
+.rotate {
+  transform: rotate(180deg);
+}
+
+/* =========================
+   GLITCH EFFECT (CODE-RED FEEL)
+========================= */
+.nav-links a:hover::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 100%;
+  background: red;
+  animation: glitch 0.25s infinite;
+}
+
+@keyframes glitch {
+  0% { transform: translateX(0); opacity: 1; }
+  50% { transform: translateX(2px); opacity: 0.7; }
+  100% { transform: translateX(-2px); opacity: 1; }
+}
+ 
+</style>
+</head>
+<body>
+
+<!-- Custom cursor -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- Matrix rain background -->
+<canvas id="matrixCanvas"></canvas>
+
+
+
+  <div class="hamburger" id="hamburger" onclick="toggleMenu()">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+
+
+
+
+<!-- ── NAVBAR ── -->
+<nav class="topbar">
+  <a href="#hero" class="nav-brand">
+    <div class="nav-logo-ring">
+      <img src="logo.png" alt="Code Red Logo"
+        onerror="this.parentElement.innerHTML='<span style=\'font-family:Orbitron,monospace;font-size:13px;font-weight:900;color:#ff0000;\'>CR</span>'">
+    </div>
+    <div class="nav-brand-text">
+      CODE-RED
+      <small>TECH CAPSTONE</small>
+    </div>
+  </a>
+  
+  <ul class="nav-links">
+    <li><a href="index.html" class="active">HOME</a></li>
+    <li><a href="About Us.html">About Us </a></li>
+    <li class="dropdown">
+      <a class="dropdown-toggle" onclick="toggleDrop(event)">ACTIVITY <span class="arrow" id="arrow">▾</span></a>
+      <div class="dropdown-menu" id="dropMenu">
+        <a href="Marshmallow Challenge.html">Marshmallow Challenge</a>
+        <a href="Elevator pitch.html">Elevator Pitch</a>
+        <a href="Website presentation.html">Website Presentation</a>
+        <a href="jeoparody.html">Jeopardy</a>
+        <a href="literature review.html">Literature Review</a>
+        <a href="persona mapping.html">Persona Mapping</a>
+        <a href="STORYBOARD.html">Storyboard</a>
+        <a href="prototype.html">Prototype</a>
+         <a href="IEEE Documentation.html">IEEE Documentation</a>
+      </div>
+       <li><a href="click.html">Logout </a></li>
+    </li>
+  </ul>
+</nav>
+
+
+<!-- ─── HERO ─── -->
+<section id="home">
+  <div class="hero-eyebrow">WELCOME TO TEAM CODE RED!</div>
+
+  <h1 class="hero-title">
+    <span class="team">TEAM</span><br>
+    <span class="code">CODE</span><span class="red-word">-RED</span>
+  </h1>
+
+  <div class="hero-img-wrap">
+    <div class="hero-img-glow"></div>
+    <img src="6.png" alt="Team Code-Red"
+      onerror="this.style.cssText='width:200px;height:200px;display:flex;align-items:center;justify-content:center;background:rgba(255,0,0,0.06);border-radius:12px;border:1px solid rgba(255,0,0,0.4);font-family:Orbitron,monospace;font-size:48px;font-weight:900;color:var(--red);'">
+  </div>
+<h3 class="section-title">"When The Signal<span> Turn Red, We Act"</span>?</h3>
+<br>
+  <div class="hero-btns">
+    <a href="#projects" class="btn-primary">View Logo</a>
+    <a href="#team" class="btn-outline">Meet the Team</a>
+  </div>
+
+  <div class="scroll-hint">
+    <span>SCROLL</span>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ─── ABOUT ─── -->
+<section id="about">
+  <div class="section reveal">
+    <span class="section-label">TEAM CODE-RED</span>
+    <h2 class="section-title">Who is <span>Code-Red</span>?</h2>
+    <div class="section-line"></div>
+
+    <div class="about-grid">
+      <div class="about-text">
+        <p>We are <strong>Team Code-Red</strong> — a squad of passionate developers, designers, and problem solvers united by a single mission: push the boundaries of what's possible with code.</p>
+        <p>From hackathons to real-world projects, we operate at the intersection of <strong>creativity and engineering</strong>. Every line of code we write is deliberate. Every project we ship is built to last.</p>
+        <p>Red isn't just our color — it's our energy. Our urgency. Our commitment to being <strong>first, fastest, and fiercest</strong>.</p>
+        <a href="#team" class="btn-outline" style="margin-top:10px;">Meet the TEAM </a>
+      </div>
+</section>
+
+<div class="divider"></div>
+<!-- ─── TEAM ─── -->
+<section id="team" class="team-single">
+
+  <div class="team-overlay">
+
+    <span class="section-label">99% THE Team</span>
+    <h2 class="section-title">Meet the <span>Team</span></h2>
+    <div class="section-line"></div>
+
+    <!-- ONE IMAGE ONLY -->
+    <div class="team-image-box">
+      <img src="34.png" alt="Team Code Red">
+    </div>
+
+    <!-- OPTIONAL DESCRIPTION -->
+    <h1 class="team-desc">
+      Team Code Red is composed of dedicated members working together as one unit
+      with different roles in development, design, and leadership.
+    </h1>
+
+  </div>
+  
+
+</section>
+
+<!-- ─── ABOUT ─── -->
+<section id="about">
+  <div class="section reveal">
+    <span class="section-label">who we are</span>
+    <h2 class="section-title"> WHO <span>WE ARE?</span>?</h2>
+    <div class="section-line"></div>
+
+    <div class="about-grid">
+      <div class="about-text">
+        <h3><p>We are <strong>of passionate students who work together to create smart</strong> , creative, and reliable solutions through team work. Each with a specific role: Hacker, Hipster, Hustler, and a Handler. As a team, we aim to work with clear communication, responsibility, efficiently, and cooperatively.</p></h3>
+        <a href="#team" class="btn-outline" style="margin-top:10px;">Meet the Team</a>
+      </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ─── PROJECTS ─── -->
+<section id="projects">
+  <div class="section reveal"></div>
+     <a href="#" class="project-link">View my logo</a>
+    <div class="section-line"></div>
+
+      <!-- MEMBER 1 -->
+<div class="padrogani-content">
+
+  <!-- Logo on top -->
+  <img src="logo.png" alt="logo name">
+
+  <!-- Motto section below the image -->
+  <div class="padrogani-text">
+    <h4 class="section-title">LET'S EXPLORE THE MEANING <span>OF OUR TEAM LOGO </span></h4>
+
+     <g>
+      Our logo represents alertness, teamwork, and responsibility in technology.
+The red circular design symbolizes urgency and readiness. Red is commonly associated with warnings and important signals, which reflects our team's ability to respond quickly and effectively to challenges just like a real "code red" situation. 
+
+At the center of the logo is a warning triangle with an exclamation mark. This symbolizes awareness, caution, and problem recognition. It represents our team's mindset of identifying issues early and finding smart, ethical solutions before they become bigger problems.
+The circuit-like patterns surrounding the logo represent technology, coding, and digital systems. 
+The repeated text "TEAM CODE RED" around the logo emphasizes unity and collaboration. It shows that every member plays an important role and that teamwork is at the core of our success.
+     </g>
+  </div>
+        </div>
+      </div>
+
+
+
+
+    </div>
+  </div>
+</section>
+
+      <!-- ─── ABOUT ─── -->
+<section id="about">
+  <div class="section reveal">
+    <span class="section-label">01% — OUR MOTTO</span>
+    <h2 class="section-title"> MEANING BEHIND <span>OUR MOTTO</span>?</h2>
+        <h2 class="section-title"> "When The Signal <span>Turn Red, We Act"</span>?</h2>
+    <div class="section-line"></div>
+
+    <div class="about-grid">
+      <div class="about-text">
+        <h3><p>Our motto<strong>symbolizes urgency and responsibility. The "red signal represents critical moments, warnings, or challenges</strong>that require immediate attention. Instead of ignoring the signal or waiting, we act by staying focused, working together, and finding effective solutions. 
+This reflects TEAM CODE RED'S mindset of being proactive. When problems arise, we respond with team work, quick thinking, and responsible action to achieve positive results.</p></h3>
+        <a href="#team" class="btn-outline" style="margin-top:10px;">Meet the Team</a>
+      </div>
+</div>
+</section>
+
+
+
+
+<!-- ─── PROJECTS ─── -->
+<section id="projects">
+  <div class="section reveal">
+    <span class="section-label">// 03 — IKAW TO</span>
+    <h2 class="section-title">HIGH<span>LIGHT</span></h2>
+    <div class="section-line"></div>
+
+    <div class="projects-grid">
+      <div class="project-card">
+        <div class="project-img gallery-card">
+          <img src="1.png" alt="RedShield Auth">
+        </div>
+        <div class="project-body">
+          <span class="project-tag">SECURITY</span>
+          <h1> <div class="project-title">Fast Responders</div></h1>
+          <h2><p class="project-desc">We adapt quickly to challenges and deadlines.</p></h2>
+          <a href="#" class="project-link">View Project</a>
+        </div>
+      </div>
+
+      <div class="project-card">
+        <div class="project-img gallery-card">
+          <img src="2.png" alt="Code-Red AI">
+        </div>
+        <div class="project-body">
+          <span class="project-tag">AI / ML</span>
+          <div class="project-title">Code-Red AI</div>
+          <p class="project-desc">An AI-powered code review tool that detects bugs, security vulnerabilities, and style issues in real time.</p>
+          <a href="#" class="project-link">View Project</a>
+        </div>
+      </div>
+
+      <div class="project-card">
+        <div class="project-img gallery-card">
+          <img src="3.png" alt="RedNet Monitor">
+        </div>
+        <div class="project-body">
+          <span class="project-tag">IOT</span>
+          <div class="project-title">RedNet Monitor</div>
+          <p class="project-desc">Real-time IoT network monitoring dashboard with anomaly detection and instant alerts.</p>
+          <a href="#" class="project-link">View Project</a>
+        </div>
+      </div>
+
+      <div class="project-card">
+        <div class="project-img gallery-card">
+          <img src="4.png" alt="Crimson Runner">
+        </div>
+        <div class="project-body">
+          <span class="project-tag">GAME DEV</span>
+          <div class="project-title">Crimson Runner</div>
+          <p class="project-desc">A browser-based endless runner game built with Canvas API — no libraries, pure JS.</p>
+          <a href="#" class="project-link">View Project</a>
+        </div>
+      </div>
+
+</section>
+
+<div class="divider"></div>
+
+<!-- ─── CODE PLAYGROUND ─── -->
+<section id="playground" style="background:rgba(255,0,0,0.015);">
+  <div class="section reveal">
+    <span class="section-label">CODE EDITOR taberna</span>
+    <h2 class="section-title">Web-Based School Concern <span>and<span> Reporting System</span></h2>
+    <div class="section-line"></div>
+
+    <div class="editor-wrap">
+      <div class="editor-bar">
+        <div class="editor-dot r"></div>
+        <div class="editor-dot y"></div>
+        <div class="editor-dot g"></div>
+        <span class="editor-filename">index.html — Code-Red Editor</span>
+      </div>
+
+      <div class="editor-body">
+        <div class="editor-pane">
+          <label>HTML / CSS / JS</label>
+          <textarea id="codeInput" spellcheck="false" placeholder="// Write your code here...">
+<<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CODE-RED Auto Terminal</title>
+
+<style>
+body {
+    background: black;
+    color: #ff1a1a;
+    font-family: monospace;
+    margin: 0;
+}
+
+/* Terminal */
+#terminal {
+    padding: 20px;
+    height: 100vh;
+    overflow-y: auto;
+    color: #ff1a1a;
+}
+
+/* Input */
+input {
+    background: black;
+    border: none;
+    color: #ff1a1a;
+    font-family: monospace;
+    width: 90%;
+    outline: none;
+}
+
+/* Lines */
+.line {
+    margin-bottom: 5px;
+    text-shadow: 0 0 5px #ff1a1a, 0 0 10px #8b0000;
+}
+
+/* Glow */
+#terminal, input {
+    text-shadow: 0 0 6px #ff1a1a;
+}
+</style>
+</head>
+
+<body>
+
+<div id="terminal"></div>
+
+<script>
+const terminal = document.getElementById("terminal");
+
+let user = null;
+let role = "student";
+let reports = JSON.parse(localStorage.getItem("reports")) || [];
+
+/* PRINT TEXT */
+function print(text, speed = 15) {
+    const div = document.createElement("div");
+    div.className = "line";
+    terminal.appendChild(div);
+
+    let i = 0;
+    function type() {
+        if (i < text.length) {
+            div.innerHTML += text.charAt(i);
+            i++;
+            setTimeout(type, speed);
+        }
+    }
+    type();
+
+    terminal.scrollTop = terminal.scrollHeight;
+}
+
+/* INPUT */
+function inputLine(callback) {
+    const div = document.createElement("div");
+    div.innerHTML = "> <input autofocus />";
+    terminal.appendChild(div);
+
+    const input = div.querySelector("input");
+
+    input.addEventListener("keydown", function(e) {
+        if (e.key === "Enter") {
+            const value = input.value;
+            div.innerHTML = "> " + value;
+            callback(value);
+        }
+    });
+
+    input.focus();
+}
+
+/* BOOT SYSTEM */
+function bootSystem() {
+    print("Booting CODE-RED System...", 25);
+    setTimeout(() => print("Initializing modules...", 25), 500);
+    setTimeout(() => print("System Ready.", 25), 1000);
+    setTimeout(loginStep, 1500);
+}
+
+/* LOGIN */
+function loginStep() {
+    print("Enter your name:");
+    inputLine(name => {
+        user = name;
+        print("Welcome " + user);
+        showMenu();
+    });
+}
+
+/* MENU (FIXED) */
+function showMenu() {
+    print("");
+    print("================================");
+    print("        CODE-RED MAIN MENU");
+    print("================================");
+    print("1 - Submit Report");
+    print("2 - View Reports");
+    print("3 - Admin Mode");
+    print("4 - Clear Screen");
+    print("================================");
+
+    inputLine(choice => {
+        switch(choice) {
+            case "1":
+                submitReport();
+                break;
+
+            case "2":
+                viewReports();
+                setTimeout(showMenu, 500);
+                break;
+
+            case "3":
+                role = "admin";
+                print("Admin mode activated");
+                setTimeout(showMenu, 500);
+                break;
+
+            case "4":
+                terminal.innerHTML = "";
+                setTimeout(showMenu, 300);
+                break;
+
+            default:
+                print("Invalid option");
+                setTimeout(showMenu, 500);
+        }
+    });
+}
+
+/* SUBMIT REPORT */
+function submitReport() {
+    print("Enter category:");
+    inputLine(category => {
+        print("Enter concern:");
+        inputLine(concern => {
+
+            reports.push({
+                user,
+                category,
+                concern,
+                status: "Pending"
+            });
+
+            localStorage.setItem("reports", JSON.stringify(reports));
+
+            print("Report submitted successfully.");
+            setTimeout(showMenu, 800);
+        });
+    });
+}
+
+/* VIEW REPORTS */
+function viewReports() {
+    if (reports.length === 0) {
+        print("No reports found.");
+        return;
+    }
+
+    reports.forEach((r, i) => {
+        print(`[${i + 1}] ${r.user} | ${r.category} | ${r.concern} | ${r.status}`);
+    });
+}
+
+/* START */
+bootSystem();
+
+</script>
+
+</body>
+</html>
+  <h1>🔴 TEAM CODE-RED</h1>
+</body>
+</html></textarea>
+        </div>
+
+        <div class="editor-pane">
+          <label>Preview</label>
+          <iframe id="preview" title="Live Preview"></iframe>
+        </div>
+      </div>
+
+      <div class="editor-footer">
+        <button class="run-btn" onclick="runCode()">▶ Run Code</button>
+        <button class="clear-btn" onclick="clearCode()">✕ Clear</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ─── CONTACT ─── -->
+<section id="contact">
+  <div class="section reveal">
+    <span class="section-label">GET IN TOUCH</span>
+    <h2 class="section-title">Contact <span>Us</span></h2>
+    <div class="section-line"></div>
+
+    <div class="contact-grid">
+      <div class="contact-info">
+        <p>Have a project in mind? Want to collaborate? Or just want to say hi? We'd love to hear from you. Team Code-Red is always open to new challenges.</p>
+
+        <div class="contact-links">
+          <a href="mailto:coderedteam@email.com" class="contact-link">
+            <span class="contact-link-icon">✉</span>
+            put the gmail.com.com
+          </a>
+          <a href="https://github.com" class="contact-link" target="_blank">
+            <span class="contact-link-icon">⌥</span>
+            github.com/team-code-red
+          </a>
+          <a href="https://discord.gg" class="contact-link" target="_blank">
+            <span class="contact-link-icon">◈</span>
+           put your name
+          </a>
+          <a href="#" class="contact-link">
+            <span class="contact-link-icon">◎</span>
+            @teamcoderedofficial
+          </a>
+        </div>
+      </div>
+
+      <form class="contact-form" onsubmit="submitForm(event)">
+        <div class="form-group">
+          <label>Your Name</label>
+          <input type="text" placeholder="FULL NAME " required>
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" placeholder="GMAIL.com" required>
+        </div>
+        <div class="form-group">
+          <label>Message</label>
+          <textarea placeholder="Tell us about your project or idea..." required></textarea>
+        </div>
+        <button type="submit" class="btn-primary" style="width:fit-content;border:none;cursor:pointer;">Send Message →</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ─── FOOTER ─── -->
+<footer>
+  <div class="footer-logo">CODE-RED</div>
+  <div class="footer-sub">ELITE DEVELOPMENT SQUAD — BUILT DIFFERENT</div>
+  <div class="footer-links">
+    <a href="#home">Home</a>
+    <a href="#about">About</a>
+    <a href="#team">Team</a>
+    <a href="#projects">Projects</a>
+    <a href="#playground">Playground</a>
+    <a href="#contact">Contact</a>
+  </div>
+  <div class="footer-copy">© 2025 Team Code-Red. All rights reserved.</div>
+</footer>
+
+<!-- ─── SCRIPTS ─── -->
+<script>
+
+   
+function toggleDrop(event) {
+  const dropdown = event.target.closest(".dropdown");
+  const menu = document.getElementById("dropMenu");
+  const arrow = document.getElementById("arrow");
+
+  dropdown.classList.toggle("show");
+  menu.classList.toggle("show");
+  arrow.classList.toggle("rotate");
+}
+
+/* close when clicking outside */
+window.onclick = function(e) {
+  if (!e.target.closest(".dropdown")) {
+    document.querySelector(".dropdown").classList.remove("show");
+    document.getElementById("dropMenu").classList.remove("show");
+    document.getElementById("arrow").classList.remove("rotate");
+  }
+}
+
+function toggleDropdown() {
+  const menu = document.getElementById("dropdownMenu");
+  const arrow = document.getElementById("arrow");
+
+  menu.classList.toggle("show");
+  arrow.classList.toggle("rotate");
+}
+
+
+// ── Matrix Rain ──────────────────────────────────────────────
+const canvas = document.getElementById('matrixCanvas');
+const ctx = canvas.getContext('2d');
+
+function resizeMatrix() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeMatrix();
+window.addEventListener('resize', resizeMatrix);
+
+const chars = 'DRAGABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789DRAGABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789DRAGABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<>{}[]()#@!%$';
+const fontSize = 14;
+let columns = Math.floor(canvas.width / fontSize);
+let drops = Array(columns).fill(1);
+
+function drawMatrix() {
+  ctx.fillStyle = 'rgba(0,0,0,0.05)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#ff0000';
+  ctx.font = fontSize + 'px Share Tech Mono, monospace';
+
+  for (let i = 0; i < drops.length; i++) {
+    const char = chars[Math.floor(Math.random() * chars.length)];
+    ctx.fillStyle = i % 5 === 0 ? '#ff6666' : '#cc0000';
+    ctx.fillText(char, i * fontSize, drops[i] * fontSize);
+    if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+    drops[i]++;
+  }
+}
+
+window.addEventListener('resize', () => {
+  columns = Math.floor(canvas.width / fontSize);
+  drops = Array(columns).fill(1);
+});
+
+setInterval(drawMatrix, 50);
+
+// ── Custom Cursor ────────────────────────────────────────────
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursorRing');
+let mx = 0, my = 0, rx = 0, ry = 0;
+
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cursor.style.left = mx + 'px';
+  cursor.style.top = my + 'px';
+});
+
+function animateRing() {
+  rx += (mx - rx) * 0.12;
+  ry += (my - ry) * 0.12;
+  ring.style.left = rx + 'px';
+  ring.style.top = ry + 'px';
+  requestAnimationFrame(animateRing);
+}
+animateRing();
+
+document.querySelectorAll('a, button, .team-card, .project-card').forEach(el => {
+  el.addEventListener('mouseenter', () => {
+    cursor.style.width = '20px';
+    cursor.style.height = '20px';
+    ring.style.width = '56px';
+    ring.style.height = '56px';
+  });
+  el.addEventListener('mouseleave', () => {
+    cursor.style.width = '12px';
+    cursor.style.height = '12px';
+    ring.style.width = '36px';
+    ring.style.height = '36px';
+  });
+});
+
+// ── Scroll Reveal ────────────────────────────────────────────
+const reveals = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.classList.add('visible'), i * 80);
+    }
+  });
+}, { threshold: 0.1 });
+reveals.forEach(el => observer.observe(el));
+
+// ── Active nav link ──────────────────────────────────────────
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.nav-links a');
+
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 100) current = s.id;
+  });
+  navLinks.forEach(a => {
+    a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+  });
+});
+
+// ── Mobile menu ──────────────────────────────────────────────
+function toggleMenu() {
+  const menu = document.getElementById('mobileMenu');
+  const ham = document.getElementById('hamburger');
+  const open = menu.style.display === 'flex';
+  menu.style.display = open ? 'none' : 'flex';
+  ham.classList.toggle('open', !open);
+}
+
+function closeMenu() {
+  document.getElementById('mobileMenu').style.display = 'none';
+  document.getElementById('hamburger').classList.remove('open');
+}
+
+// ── Code Playground ──────────────────────────────────────────
+function runCode() {
+  const code = document.getElementById('codeInput').value;
+  const preview = document.getElementById('preview');
+  const doc = preview.contentDocument || preview.contentWindow.document;
+  doc.open(); doc.write(code); doc.close();
+}
+
+function clearCode() {
+  document.getElementById('codeInput').value = '';
+  const preview = document.getElementById('preview');
+  const doc = preview.contentDocument || preview.contentWindow.document;
+  doc.open(); doc.write(''); doc.close();
+}
+
+// Auto-run on load
+window.addEventListener('load', runCode);
+
+// ── Contact form ─────────────────────────────────────────────
+function submitForm(e) {
+  e.preventDefault();
+  const btn = e.target.querySelector('button[type=submit]');
+  btn.textContent = '✓ Message Sent!';
+  btn.style.background = '#00cc55';
+  setTimeout(() => {
+    btn.textContent = 'Send Message →';
+    btn.style.background = 'var(--red)';
+    e.target.reset();
+  }, 3000);
+}
+</script>
+</body>
+</html>
