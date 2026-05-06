@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TEAM CODERED — Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --red: #ff0000;
+  --red-dim: rgba(255,0,0,0.18);
+  --red-glow: rgba(255,0,0,0.45);
+  --dark: #050000;
+  --dark2: #0d0000;
+  --muted: rgba(255,255,255,0.35);
+  --mono: 'Share Tech Mono', monospace;
+  --display: 'Bebas Neue', sans-serif;
+  --body: 'Rajdhani', sans-serif;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--dark);
+  color: #fff;
+  font-family: var(--body);
+  overflow-x: hidden;
+  cursor: none;
+}
+
+/* ── CURSOR ── */
+.cursor {
+  position: fixed; width: 10px; height: 10px;
+  background: var(--red); border-radius: 50%;
+  pointer-events: none; z-index: 10000;
+  transform: translate(-50%,-50%);
+  transition: width .15s, height .15s;
+  mix-blend-mode: screen;
+}
+.cursor-ring {
+  position: fixed; width: 34px; height: 34px;
+  border: 1px solid rgba(255,0,0,.5); border-radius: 50%;
+  pointer-events: none; z-index: 9999;
+  transform: translate(-50%,-50%);
+  transition: width .2s, height .2s;
+}
+
+/* ── SCANLINES ── */
+body::after {
+  content: ''; position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,.07) 3px, rgba(0,0,0,.07) 4px);
+  pointer-events: none; z-index: 9990;
+}
+
+/* ── CANVAS ── */
+#bg { position: fixed; top:0; left:0; z-index: -1; pointer-events: none; }
+
+/* ── NAV ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 1000;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 48px; height: 68px;
+  background: rgba(4,0,0,.93);
+  border-bottom: 1px solid rgba(255,0,0,.25);
+  backdrop-filter: blur(14px);
+}
+.nav-logo {
+  display: flex; align-items: center; gap: 14px;
+  text-decoration: none; color: #fff;
+}
+.nav-logo-circle {
+  width: 42px; height: 42px; border-radius: 50%;
+  background: #fff; border: 2px solid var(--red);
+  overflow: hidden; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 14px var(--red-glow);
+}
+.nav-logo-circle img { width: 110%; height: 110%; object-fit: contain; }
+.nav-brand { font-family: var(--display); font-size: 22px; letter-spacing: 3px; color: #fff; line-height: 1; }
+.nav-brand span { display: block; font-family: var(--mono); font-size: 9px; color: var(--red); letter-spacing: 4px; font-weight: 400; margin-top: 2px; }
+
+.nav-links {
+  list-style: none; margin: 0; padding: 0;
+  display: flex; align-items: center; gap: 2px;
+  background: transparent; border: none; box-shadow: none;
+}
+.nav-links li { position: relative; }
+.nav-links a {
+  display: block; padding: 8px 16px;
+  color: rgba(255,255,255,.6);
+  font-family: var(--mono); font-size: 13px; letter-spacing: 2px;
+  text-decoration: none; text-transform: uppercase;
+  transition: color .2s; position: relative;
+  background: transparent;
+}
+.nav-links a:hover { color: #fff; background: transparent; text-shadow: none; box-shadow: none; }
+.nav-links a::after {
+  content: ''; position: absolute;
+  bottom: 4px; left: 16px; right: 16px;
+  height: 1px; background: var(--red);
+  transform: scaleX(0); transition: transform .2s;
+  animation: none;
+}
+.nav-links a:hover::after { transform: scaleX(1); }
+.nav-links a.active { color: var(--red); background: transparent; font-weight: normal; box-shadow: none; }
+.nav-links a.active::after { transform: scaleX(1); }
+
+/* ── DROPDOWN ── */
+.dropdown { position: relative; }
+.dropdown-toggle { cursor: pointer; user-select: none; }
+.dropdown-menu {
+  display: none; position: absolute; top: 50px; left: 0;
+  background: rgba(8,0,0,.98);
+  border: 1px solid rgba(255,0,0,.25);
+  border-radius: 6px; min-width: 200px;
+  box-shadow: 0 10px 30px rgba(255,0,0,.12);
+  overflow: hidden; z-index: 1000;
+  max-height: 300px; overflow-y: auto;
+}
+.dropdown-menu.open { display: block; }
+.dropdown-menu a {
+  display: block; padding: 12px 18px;
+  color: rgba(255,255,255,.65);
+  font-family: var(--mono); font-size: 13px; letter-spacing: 1px;
+  text-decoration: none; border-left: 2px solid transparent;
+  border-bottom: 1px solid rgba(255,0,0,.1);
+  transition: all .2s; background: transparent;
+}
+.dropdown-menu a::after { display: none; }
+.dropdown-menu a:hover {
+  color: #fff; background: rgba(255,0,0,.07);
+  border-left-color: var(--red); padding-left: 24px;
+}
+.arrow { display: inline-block; transition: transform .25s; color: var(--red); font-size: 12px; margin-left: 4px; }
+.arrow.open { transform: rotate(180deg); }
+.dropdown-menu::-webkit-scrollbar { width: 6px; }
+.dropdown-menu::-webkit-scrollbar-thumb { background: red; border-radius: 10px; }
+.dropdown-menu::-webkit-scrollbar-track { background: black; }
+
+/* ── HERO ── */
+#home {
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 110px 40px 70px;
+  position: relative; text-align: center;
+}
+.hero-eyebrow {
+  font-family: var(--mono); font-size: 11px;
+  letter-spacing: 6px; color: var(--red);
+  margin-bottom: 18px;
+  animation: fadeUp .8s ease both;
+}
+.hero-title {
+  font-family: var(--display);
+  font-size: clamp(72px, 14vw, 180px);
+  line-height: .9; letter-spacing: 6px;
+  animation: fadeUp .8s .1s ease both;
+}
+.hero-title .dim { color: rgba(255,255,255,.1); }
+.hero-title .glow {
+  color: var(--red);
+  text-shadow: 0 0 30px rgba(255,0,0,.7), 0 0 70px rgba(255,0,0,.3);
+  animation: pulse 3s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,100% { text-shadow: 0 0 30px rgba(255,0,0,.7), 0 0 70px rgba(255,0,0,.3); }
+  50%      { text-shadow: 0 0 60px rgba(255,0,0,1), 0 0 120px rgba(255,0,0,.5); }
+}
+.hero-sub {
+  font-family: var(--body); font-size: 16px;
+  letter-spacing: 3px; color: var(--muted);
+  margin: 18px 0 48px;
+  animation: fadeUp .8s .2s ease both;
+}
+.hero-img-wrap {
+  position: relative; display: inline-block;
+  animation: fadeUp .8s .3s ease both;
+}
+.hero-img-wrap img {
+  width: min(900px,82vw); border-radius: 10px;
+  border: 1px solid rgba(255,0,0,.4); display: block;
+}
+.hero-img-glow {
+  position: absolute; inset: -40px;
+  background: radial-gradient(ellipse, rgba(255,0,0,.15) 0%, transparent 70%);
+  z-index: -1; animation: breathe 4s ease-in-out infinite;
+}
+@keyframes breathe {
+  0%,100% { opacity:.5; transform:scale(1); }
+  50%      { opacity:1;  transform:scale(1.06); }
+}
+.corner { position: absolute; width: 20px; height: 20px; }
+.corner.tl { top:-4px; left:-4px; border-top:2px solid var(--red); border-left:2px solid var(--red); }
+.corner.tr { top:-4px; right:-4px; border-top:2px solid var(--red); border-right:2px solid var(--red); }
+.corner.bl { bottom:-4px; left:-4px; border-bottom:2px solid var(--red); border-left:2px solid var(--red); }
+.corner.br { bottom:-4px; right:-4px; border-bottom:2px solid var(--red); border-right:2px solid var(--red); }
+.hero-btns {
+  display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
+  margin-top: 36px; animation: fadeUp .8s .4s ease both;
+}
+.btn-primary {
+  font-family: var(--mono); font-size: 11px; letter-spacing: 3px;
+  text-transform: uppercase; color: #000;
+  background: var(--red); border: 2px solid var(--red);
+  padding: 13px 30px; border-radius: 3px;
+  text-decoration: none; transition: all .2s;
+}
+.btn-primary:hover { background: #ff2222; box-shadow: 0 0 28px var(--red-glow); letter-spacing: 4px; }
+.btn-outline {
+  font-family: var(--mono); font-size: 11px; letter-spacing: 3px;
+  text-transform: uppercase; color: #fff;
+  background: transparent; border: 2px solid rgba(255,255,255,.18);
+  padding: 13px 30px; border-radius: 3px;
+  text-decoration: none; transition: all .2s;
+}
+.btn-outline:hover { border-color: var(--red); color: var(--red); letter-spacing: 4px; }
+.scroll-hint {
+  position: absolute; bottom: 28px; left: 50%;
+  transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  opacity: .35; animation: scrollBounce 2s ease-in-out infinite;
+}
+.scroll-hint span { font-family: var(--mono); font-size: 9px; letter-spacing: 4px; color: var(--red); }
+.scroll-hint::after { content:''; width:1px; height:36px; background: linear-gradient(to bottom, var(--red), transparent); }
+@keyframes scrollBounce {
+  0%,100% { transform: translateX(-50%) translateY(0); }
+  50%      { transform: translateX(-50%) translateY(8px); }
+}
+
+/* ── DIVIDER ── */
+.divider {
+  width: 100%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,0,0,.35), transparent);
+}
+
+/* ── SECTIONS ── */
+.section { padding: 100px 48px; max-width: 1200px; margin: 0 auto; }
+.sec { padding: 80px 48px; max-width: 1200px; margin: 0 auto; }
+.sec-label { font-family: var(--mono); font-size: 10px; letter-spacing: 5px; color: var(--red); display: block; margin-bottom: 10px; }
+.sec-title { font-family: var(--display); font-size: clamp(36px,5vw,64px); line-height: 1; color: #fff; margin-bottom: 10px; }
+.sec-title span { color: var(--red); }
+.sec-line { width: 56px; height: 2px; background: var(--red); margin-bottom: 48px; box-shadow: 0 0 8px var(--red-glow); }
+
+/* ── CARD / PANEL ── */
+.card {
+  background: rgba(255,0,0,.04);
+  margin: 0 auto 4px;
+  padding: 18px 24px;
+  width: 100%; max-width: 700px;
+  border: 1px solid rgba(255,0,0,.35);
+  border-radius: 8px; cursor: pointer;
+  transition: all .3s;
+  font-family: var(--mono); font-size: 13px;
+  letter-spacing: 3px; color: rgba(255,255,255,.7);
+  text-align: center; text-transform: uppercase;
+  user-select: none;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+.card:hover {
+  background: rgba(255,0,0,.12);
+  border-color: var(--red); color: #fff;
+  box-shadow: 0 0 20px rgba(255,0,0,.2);
+  transform: none;
+}
+.card .card-arrow { display: inline-block; transition: transform .3s; color: var(--red); }
+.card.open .card-arrow { transform: rotate(180deg); }
+
+.panel {
+  max-height: 0; overflow: hidden;
+  transition: max-height .6s ease;
+  width: 100%; max-width: 700px; margin: 0 auto;
+}
+.panel.open { max-height: 600px; }
+.panel-content { padding: 20px 0 10px; }
+
+/* ── PDF PREVIEW ── */
+.pdf-preview {
+  width: 100%; height: 500px;
+  border: 1px solid rgba(255,0,0,.35);
+  border-radius: 10px; overflow: hidden;
+  cursor: pointer; position: relative;
+  transition: border-color .3s;
+}
+.pdf-preview:hover { border-color: var(--red); box-shadow: 0 0 20px rgba(255,0,0,.15); }
+.pdf-preview iframe { width: 100%; height: 100%; border: none; pointer-events: none; }
+
+/* ── DESCRIPTION BOX ── */
+.pitch-box {
+  display: grid; grid-template-columns: 4px 1fr; gap: 0;
+  border: 1px solid rgba(255,0,0,.2); border-radius: 10px; overflow: hidden;
+  background: rgba(255,0,0,.03);
+}
+.pitch-stripe { background: var(--red); box-shadow: 0 0 16px var(--red-glow); }
+.pitch-content { padding: 32px 36px; }
+.pitch-content .pitch-tag { font-family: var(--mono); font-size: 10px; letter-spacing: 5px; color: var(--red); display: block; margin-bottom: 14px; }
+.pitch-content p { font-size: 16px; line-height: 1.85; color: rgba(255,255,255,.65); }
+
+/* ── SLIDESHOW ── */
+#docs { background: rgba(255,0,0,.015); }
+.slideshow-wrap {
+  position: relative; width: 100%; max-width: 900px;
+  margin: 0 auto; border-radius: 12px; overflow: hidden;
+  border: 1px solid rgba(255,0,0,.3); box-shadow: 0 0 30px rgba(255,0,0,.1);
+}
+.slideshow-wrap img { width: 100%; height: 480px; object-fit: contain; background: #0a0000; display: block; transition: opacity .5s; }
+.slide-controls { display: flex; justify-content: center; gap: 10px; margin-top: 16px; }
+.slide-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,0,0,.3); cursor: pointer; transition: background .2s; border: none; }
+.slide-dot.active { background: var(--red); box-shadow: 0 0 8px var(--red); }
+
+/* ── PDF FULLSCREEN VIEWER ── */
+#pdfViewer {
+  position: fixed; top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,.97);
+  display: none; z-index: 9000;
+  flex-direction: column;
+}
+#pdfViewer.active { display: flex; }
+#pdfFrame { width: 100%; flex: 1; border: none; }
+.viewer-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 24px;
+  background: rgba(10,0,0,.95);
+  border-bottom: 1px solid rgba(255,0,0,.3);
+  font-family: var(--mono); font-size: 11px; letter-spacing: 2px; color: rgba(255,255,255,.5);
+}
+.close-btn {
+  cursor: pointer;
+  background: rgba(255,0,0,.12);
+  border: 1px solid rgba(255,0,0,.35);
+  color: var(--red);
+  font-family: var(--mono); font-size: 12px; letter-spacing: 2px;
+  padding: 6px 16px; border-radius: 4px;
+  transition: all .2s;
+}
+.close-btn:hover { background: var(--red); color: #000; }
+
+/* ── FOOTER ── */
+footer {
+  border-top: 1px solid rgba(255,0,0,.3);
+  padding: 44px 48px; text-align: center;
+  background: rgba(0,0,0,.7);
+  font-size: unset; margin-top: 0;
+}
+.footer-logo { font-family: var(--display); font-size: 28px; letter-spacing: 6px; color: var(--red); text-shadow: 0 0 20px var(--red-glow); margin-bottom: 8px; }
+.footer-sub { font-family: var(--mono); font-size: 10px; letter-spacing: 3px; color: rgba(255,255,255,.2); margin-bottom: 22px; }
+.footer-links { display: flex; gap: 28px; justify-content: center; flex-wrap: wrap; margin-bottom: 22px; }
+.footer-links a { font-family: var(--mono); font-size: 10px; letter-spacing: 2px; color: rgba(255,255,255,.3); text-decoration: none; text-transform: uppercase; transition: color .2s; }
+.footer-links a:hover { color: var(--red); }
+.footer-copy { font-family: var(--mono); font-size: 10px; color: rgba(255,255,255,.13); letter-spacing: 1px; }
+
+/* ── REVEAL ── */
+.reveal { opacity: 0; transform: translateY(28px); transition: opacity .7s ease, transform .7s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(22px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+@media(max-width:768px) {
+  nav { padding: 0 20px; }
+  .nav-links { display: none; }
+  .section, .sec { padding: 70px 20px; }
+}
+
+/* NAV BASE */
+.nav-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+
+  background: linear-gradient(90deg, #000, #0a0a0a);
+  border-bottom: 2px solid #ff0000;
+  box-shadow: 0 0 20px #ff0000;
+}
+
+/* NAV ITEMS */
+.nav-links li {
+  position: relative;
+}
+
+/* LINKS */
+.nav-links a {
+  display: block;
+  padding: 14px 18px;
+  color: #ff3b3b;
+  text-decoration: none;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: 0.25s;
+  position: relative;
+}
+
+/* HOVER EFFECT (CODE-RED GLOW) */
+.nav-links a:hover {
+  background: #1a0000;
+  color: #fff;
+  text-shadow: 0 0 10px red;
+  box-shadow: inset 0 0 10px red;
+}
+
+/* ACTIVE PAGE */
+.nav-links a.active {
+  background: red;
+  color: black;
+  font-weight: bold;
+  box-shadow: 0 0 15px red;
+}
+
+/* =========================
+   DROPDOWN MENU
+========================= */
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+
+  background: #050505;
+  min-width: 45px;
+
+  /* 🔥 SCROLL FEATURE */
+  max-height: 240px;
+  overflow-y: auto;
+
+  border: 1px solid red;
+  box-shadow: 0 0 25px red;
+  z-index: 1000;
+}
+
+/* SHOW DROPDOWN */
+.dropdown.show .dropdown-menu {
+  display: block;
+}
+
+/* DROPDOWN ITEMS */
+.dropdown-menu a {
+  padding: 12px 14px;
+  color: #ff3b3b;
+  display: block;
+  border-bottom: 1px solid #1a0000;
+  transition: 0.2s;
+}
+
+/* hover inside dropdown */
+.dropdown-menu a:hover {
+  background: #300000;
+  color: #fff;
+  text-shadow: 0 0 8px red;
+}
+
+/* =========================
+   SCROLLBAR (RED THEME)
+========================= */
+.dropdown-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb {
+  background: red;
+  box-shadow: 0 0 10px red;
+  border-radius: 10px;
+}
+
+.dropdown-menu::-webkit-scrollbar-track {
+  background: black;
+}
+
+/* =========================
+   ARROW ANIMATION
+========================= */
+.arrow {
+  font-size: 12px;
+  margin-left: 5px;
+  transition: 0.3s;
+  color: red;
+}
+
+.rotate {
+  transform: rotate(180deg);
+}
+
+/* =========================
+   GLITCH EFFECT (CODE-RED FEEL)
+========================= */
+.nav-links a:hover::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 100%;
+  background: red;
+  animation: glitch 0.25s infinite;
+}
+
+@keyframes glitch {
+  0% { transform: translateX(0); opacity: 1; }
+  50% { transform: translateX(2px); opacity: 0.7; }
+  100% { transform: translateX(-2px); opacity: 1; }
+}
+
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+<canvas id="bg"></canvas>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="#">
+    <div class="nav-logo-circle">
+      <img src="logo.png" alt="Logo">
+    </div>
+    <div class="nav-brand">TEAM CODERED<span>TECH RESEARCH CAPSTONE</span></div>
+  </a>
+  <ul class="nav-links">
+    <li><a href="index.html" class="active">HOME</a></li>
+    <li><a href="About Us.html">About Us</a></li>
+    <li class="dropdown">
+      <a class="dropdown-toggle" href="#" onclick="toggleDrop(event)">ACTIVITY <span class="arrow" id="arrow">▾</span></a>
+      <div class="dropdown-menu" id="dropMenu">
+        <a href="Marshmallow Challenge.html">Marshmallow Challenge</a>
+        <a href="Elevator pitch.html">Elevator Pitch</a>
+        <a href="Website presentation.html">Website Presentation</a>
+        <a href="jeoparody.html">Jeopardy</a>
+        <a href="literature review.html">Literature Review</a>
+        <a href="persona mapping.html">Persona Mapping</a>
+        <a href="STORYBOARD.html">Storyboard</a>
+        <a href="prototype.html">Prototype</a>
+        <a href="IEEE Documentation.html">IEEE Documentation</a>
+      </div>
+    </li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="home">
+  <p class="hero-eyebrow">TECHNOLOGY RESEARCH CAPSTONE · 2026</p>
+  <h1 class="hero-title">
+    <span class="dim">PRO</span><span class="glow">TOTYPE</span>
+  </h1>
+  <p class="hero-sub">INNOVATION · RESEARCH · EXECUTION</p>
+
+  <div class="hero-img-wrap">
+    <img src="6.png" alt="Team CodeRed">
+    <div class="hero-img-glow"></div>
+    <div class="corner tl"></div><div class="corner tr"></div>
+    <div class="corner bl"></div><div class="corner br"></div>
+  </div>
+
+  <div class="hero-btns">
+    <a href="IEEE Documentation.html" class="btn-primary">PROCEED TO IEE DOCUMENTATION</a>
+    <a href="#reflection" class="btn-outline">REFLECTIONS</a>
+  </div>
+
+  <div class="scroll-hint"><span>SCROLL</span></div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PROTOTYPE OUTPUT -->
+<section id="research">
+  <div class="section reveal">
+    <span class="sec-label">OUTPUT</span>
+    <h2 class="sec-title">PRO<span>TOTYPE</span></h2>
+    <div class="sec-line"></div>
+
+    <div class="card" id="pdfCard" onclick="togglePanel()">
+      <span>VIEW DOCUMENT</span>
+      <span class="card-arrow">▾</span>
+    </div>
+
+    <div class="panel" id="pdfPanel">
+      <div class="panel-content">
+        <div class="pdf-preview" onclick="openPDF('PROTOTYPE.pdf')" title="Click to open fullscreen">
+          <iframe src="PROTOTYPE.pdf" tabindex="-1"></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- DOCUMENTATION SLIDESHOW -->
+<section id="docs">
+  <div class="section reveal">
+    <span class="sec-label">DOCUMENTATION</span>
+    <h2 class="sec-title">DOCUM<span>ENTATION</span></h2>
+    <div class="sec-line"></div>
+
+    <div class="slideshow-wrap">
+      <img id="slideImg" src="27.jpg" alt="Documentation">
+    </div>
+    <div class="slide-controls" id="slideDots"></div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- DESCRIPTION / REFLECTION -->
+<section id="reflection">
+  <div class="sec reveal">
+    <span class="sec-label">// DESCRIPTION</span>
+    <h2 class="sec-title">PRO<span>TOTYPE</span></h2>
+    <div class="sec-line"></div>
+
+    <div class="pitch-box">
+      <div class="pitch-stripe"></div>
+      <div class="pitch-content">
+        <span class="pitch-tag">SHORT DESCRIPTION</span>
+        <p>
+          The Prototype presents the proposed system's visual flow, showing how users interact with it step-by-step. It displays the order in which a concern is submitted, the report is processed, and the administration provides feedback. This flow-based depiction aids in comprehending the general functionality, user navigation, and structure of the system — enabling researchers to find enhancements prior to complete implementation.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">TEAM CODERED</div>
+  <div class="footer-sub">TECHNOLOGY RESEARCH CAPSTONE · 2026</div>
+  <div class="footer-links">
+    <a href="#home">Home</a>
+    <a href="#research">Research</a>
+    <a href="#docs">Docs</a>
+    <a href="#reflection">Reflection</a>
+    <a href="About Us.html">About</a>
+  </div>
+  <div class="footer-copy">© 2026 TEAM CODERED — ALL RIGHTS RESERVED</div>
+</footer>
+
+<!-- PDF FULLSCREEN VIEWER -->
+<div id="pdfViewer">
+  <div class="viewer-bar">
+    <span>PROTOTYPE — PROTOTYPE.pdf</span>
+    <button class="close-btn" onclick="closePDF()">✖ CLOSE</button>
+  </div>
+  <iframe id="pdfFrame" src=""></iframe>
+</div>
+
+<script>
+/* ── CURSOR ── */
+const cursor = document.getElementById('cursor');
+const ring   = document.getElementById('cursorRing');
+let rx=0, ry=0, cx=0, cy=0;
+document.addEventListener('mousemove', e => {
+  cx = e.clientX; cy = e.clientY;
+  cursor.style.left = cx + 'px';
+  cursor.style.top  = cy + 'px';
+});
+(function animRing() {
+  rx += (cx - rx) * .12;
+  ry += (cy - ry) * .12;
+  ring.style.left = rx + 'px';
+  ring.style.top  = ry + 'px';
+  requestAnimationFrame(animRing);
+})();
+document.querySelectorAll('a, button').forEach(el => {
+  el.addEventListener('mouseenter', () => { cursor.style.width='18px'; cursor.style.height='18px'; });
+  el.addEventListener('mouseleave', () => { cursor.style.width='10px'; cursor.style.height='10px'; });
+});
+
+/* ── DROPDOWN ── */
+function toggleDrop(e) {
+  e.preventDefault();
+  document.getElementById('dropMenu').classList.toggle('open');
+  document.getElementById('arrow').classList.toggle('open');
+}
+window.addEventListener('click', e => {
+  if (!e.target.closest('.dropdown')) {
+    document.getElementById('dropMenu').classList.remove('open');
+    document.getElementById('arrow').classList.remove('open');
+  }
+});
+
+/* ── CARD → PANEL TOGGLE ── */
+function togglePanel() {
+  const card  = document.getElementById('pdfCard');
+  const panel = document.getElementById('pdfPanel');
+  const isOpen = panel.classList.toggle('open');
+  card.classList.toggle('open', isOpen);
+}
+
+/* ── PDF FULLSCREEN VIEWER ── */
+function openPDF(src) {
+  document.getElementById('pdfFrame').src = src;
+  document.getElementById('pdfViewer').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function closePDF() {
+  document.getElementById('pdfViewer').classList.remove('active');
+  document.getElementById('pdfFrame').src = '';
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closePDF(); });
+
+/* ── CANVAS PARTICLES ── */
+const canvas = document.getElementById('bg');
+const ctx    = canvas.getContext('2d');
+let W, H, pts = [];
+function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+resize();
+window.addEventListener('resize', resize);
+for (let i = 0; i < 200; i++) pts.push({
+  x: Math.random() * 2000 - 500, y: Math.random() * 2000 - 500,
+  vx: (Math.random() - .5) * .4,  vy: (Math.random() - .5) * .4
+});
+(function draw() {
+  ctx.clearRect(0, 0, W, H);
+  pts.forEach(p => {
+    p.x += p.vx; p.y += p.vy;
+    if (p.x < -600 || p.x > W + 600) p.vx *= -1;
+    if (p.y < -600 || p.y > H + 600) p.vy *= -1;
+  });
+  pts.forEach((a, i) => {
+    pts.slice(i + 1).forEach(b => {
+      const d = Math.hypot(a.x - b.x, a.y - b.y);
+      if (d < 130) {
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+        ctx.strokeStyle = `rgba(255,0,0,${.12 * (1 - d / 130)})`;
+        ctx.lineWidth = .6; ctx.stroke();
+      }
+    });
+    ctx.beginPath(); ctx.arc(a.x, a.y, 1.4, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,0,0,.5)'; ctx.fill();
+  });
+  requestAnimationFrame(draw);
+})();
+
+/* ── SLIDESHOW ── */
+const images   = ['27.jpg'];
+const slideImg = document.getElementById('slideImg');
+const dotsWrap = document.getElementById('slideDots');
+let idx = 0;
+images.forEach((_, i) => {
+  const d = document.createElement('button');
+  d.className = 'slide-dot' + (i === 0 ? ' active' : '');
+  d.onclick = () => goTo(i);
+  dotsWrap.appendChild(d);
+});
+function goTo(i) {
+  idx = i;
+  slideImg.style.opacity = 0;
+  setTimeout(() => { slideImg.src = images[idx]; slideImg.style.opacity = 1; }, 400);
+  document.querySelectorAll('.slide-dot').forEach((d, j) => d.classList.toggle('active', j === i));
+}
+setInterval(() => goTo((idx + 1) % images.length), 5000);
+
+/* ── REVEAL ON SCROLL ── */
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: .15 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+/* ── ACTIVE NAV ON SCROLL ── */
+const sections = ['home', 'research', 'docs', 'reflection'];
+window.addEventListener('scroll', () => {
+  const y = window.scrollY + 100;
+  sections.forEach(id => {
+    const s = document.getElementById(id);
+    if (s && y >= s.offsetTop && y < s.offsetTop + s.offsetHeight) {
+      document.querySelectorAll('.nav-links a').forEach(a =>
+        a.classList.toggle('active', a.getAttribute('href') === '#' + id)
+      );
+    }
+  });
+});
+</script>
+</body>
+</html>
