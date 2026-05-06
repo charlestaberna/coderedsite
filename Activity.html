@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TEAM CODERED — Technology Research Capstone</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ─── RESET & BASE ─────────────────────────────────────────── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --red:   #ff0000;
+  --red2:  #ff2222;
+  --red3:  #cc0000;
+  --dark:  #080000;
+  --dark2: #120000;
+  --mono:  'Share Tech Mono', monospace;
+  --display: 'Orbitron', monospace;
+  --body:  'Rajdhani', sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--dark);
+  color: #fff;
+  font-family: var(--body);
+  overflow-x: hidden;
+  cursor: none;
+}
+
+/* ─── CUSTOM CURSOR ────────────────────────────────────────── */
+.cursor {
+  position: fixed;
+  width: 12px; height: 12px;
+  background: var(--red);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  transition: width 0.2s, height 0.2s;
+  mix-blend-mode: screen;
+}
+.cursor-ring {
+  position: fixed;
+  width: 36px; height: 36px;
+  border: 1px solid rgba(255,0,0,0.5);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9998;
+  transform: translate(-50%, -50%);
+  transition: transform 0.12s, width 0.3s, height 0.3s;
+}
+
+/* ─── MATRIX CANVAS ────────────────────────────────────────── */
+#matrixCanvas {
+  position: fixed;
+  top: 0; left: 0;
+  z-index: -1;
+  opacity: 0.18;
+}
+
+/* ─── SCANLINES ────────────────────────────────────────────── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.08) 2px,
+    rgba(0,0,0,0.08) 4px
+  );
+  pointer-events: none;
+  z-index: 9990;
+}
+
+/* ─── NAVBAR ───────────────────────────────────────────────── */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  height: 70px;
+  background: rgba(5,0,0,0.92);
+  border-bottom: 1px solid rgba(255,0,0,0.3);
+  backdrop-filter: blur(12px);
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: #fff;
+}
+
+.nav-logo-circle {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--red);
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 12px rgba(255,0,0,0.4);
+}
+
+.nav-logo-circle img {
+  width: 9800%; height: 110%;
+  object-fit: contain;
+}
+
+.nav-logo-text {
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #fff;
+  line-height: 1.2;
+}
+
+.nav-logo-text span {
+  display: block;
+  font-size: 9px;
+  color: var(--red2);
+  letter-spacing: 3px;
+  font-weight: 400;
+}
+
+.nav-links {
+  display: flex;
+  gap: 4px;
+  list-style: none;
+  align-items: center;
+}
+
+.nav-links a {
+  color: #ccc;
+  text-decoration: none;
+  font-family: var(--mono);
+  font-size: 16px;
+  letter-spacing: 1.5px;
+  padding: 8px 14px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  bottom: 4px; left: 14px; right: 14px;
+  height: 1px;
+  background: var(--red);
+  transform: scaleX(0);
+  transition: transform 0.2s;
+}
+
+.nav-links a:hover { color: #fff; }
+.nav-links a:hover::after { transform: scaleX(1); }
+.nav-links a.active { color: var(--red); background: rgba(255,0,0,0.08); }
+
+/* Dropdown */
+.dropdown { position: relative; }
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: rgba(8,0,0,0.98);
+  min-width: 210px;
+  border: 1px solid rgba(255,0,0,0.25);
+  box-shadow: 0 0 24px rgba(255,0,0,0.18);
+  border-radius: 6px;
+  overflow: hidden;
+  z-index: 999;
+}
+
+.dropdown-content.show { display: block; }
+
+.dropdown-content a {
+  display: block;
+  padding: 11px 16px;
+  color: rgba(255,255,255,0.65);
+  text-decoration: none;
+  font-family: var(--mono);
+  font-size: 16px;
+  letter-spacing: 1px;
+  border-left: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.dropdown-content a:hover {
+  background: rgba(255,0,0,0.07);
+  border-left-color: var(--red);
+  color: #fff;
+  padding-left: 22px;
+}
+
+.arrow {
+  display: inline-block;
+  transition: transform 0.3s;
+  font-size: 10px;
+  margin-left: 4px;
+}
+.arrow.rotate { transform: rotate(180deg); }
+
+/* Hamburger */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+  padding: 6px;
+}
+.hamburger span {
+  display: block;
+  width: 24px; height: 2px;
+  background: var(--red);
+  transition: all 0.3s;
+}
+.hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger.open span:nth-child(2) { opacity: 0; }
+.hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* ─── HERO ─────────────────────────────────────────────────── */
+#home {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100px 40px 80px;
+  position: relative;
+  text-align: center;
+}
+
+.hero-eyebrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 5px;
+  color: var(--red2);
+  margin-bottom: 20px;
+  animation: fadeUp 0.8s ease both;
+}
+
+.hero-title {
+  font-family: var(--display);
+  font-size: clamp(36px, 8vw, 90px);
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -2px;
+  margin-bottom: 8px;
+  animation: fadeUp 0.8s 0.1s ease both;
+}
+
+.hero-title .dim { color: rgba(255,255,255,0.15); }
+
+.hero-title .red-word {
+  color: var(--red);
+  text-shadow:
+    0 0 20px rgba(255,0,0,0.6),
+    0 0 40px rgba(255,0,0,0.3);
+  animation: redPulse 3s ease-in-out infinite;
+}
+
+@keyframes redPulse {
+  0%,100% { text-shadow: 0 0 20px rgba(255,0,0,0.6), 0 0 40px rgba(255,0,0,0.3); }
+  50%      { text-shadow: 0 0 40px rgba(255,0,0,0.9), 0 0 80px rgba(255,0,0,0.5), 0 0 120px rgba(255,0,0,0.2); }
+}
+
+.hero-sub {
+  font-family: var(--body);
+  font-size: clamp(14px, 2vw, 18px);
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 1px;
+  margin-bottom: 50px;
+  animation: fadeUp 0.8s 0.2s ease both;
+}
+
+.hero-img-wrap {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 50px;
+  animation: fadeUp 0.8s 0.3s ease both;
+}
+
+.hero-img-wrap img {
+  width: min(900px, 85vw);
+  height: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(255,0,0,0.45);
+  display: block;
+}
+
+.hero-img-glow {
+  position: absolute;
+  inset: -30px;
+  background: radial-gradient(ellipse, rgba(255,0,0,0.15) 0%, transparent 70%);
+  border-radius: 50%;
+  z-index: -1;
+  animation: breathe 4s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%,100% { opacity: 0.5; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.05); }
+}
+
+.hero-btns {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  animation: fadeUp 0.8s 0.4s ease both;
+}
+
+.btn-primary {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #000;
+  background: var(--red);
+  border: 2px solid var(--red);
+  padding: 14px 32px;
+  border-radius: 4px;
+  text-decoration: none;
+  transition: all 0.25s;
+  display: inline-block;
+}
+.btn-primary:hover {
+  background: #ff3333;
+  box-shadow: 0 0 30px rgba(255,0,0,0.6);
+  letter-spacing: 3px;
+}
+
+.btn-outline {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #fff;
+  background: transparent;
+  border: 2px solid rgba(255,255,255,0.2);
+  padding: 14px 32px;
+  border-radius: 4px;
+  text-decoration: none;
+  transition: all 0.25s;
+  display: inline-block;
+}
+.btn-outline:hover {
+  border-color: var(--red);
+  color: var(--red);
+  box-shadow: 0 0 20px rgba(255,0,0,0.2);
+  letter-spacing: 3px;
+}
+
+.scroll-hint {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.35;
+  animation: scrollBounce 2s ease-in-out infinite;
+}
+.scroll-hint span {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--red2);
+}
+.scroll-hint::after {
+  content: '';
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(to bottom, var(--red), transparent);
+}
+@keyframes scrollBounce {
+  0%,100% { transform: translateX(-50%) translateY(0); }
+  50%      { transform: translateX(-50%) translateY(8px); }
+}
+
+/* ─── DIVIDER ──────────────────────────────────────────────── */
+.divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,0,0,0.3), transparent);
+}
+
+/* ─── SECTION BASE ─────────────────────────────────────────── */
+.section {
+  padding: 100px 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 5px;
+  color: var(--red2);
+  margin-bottom: 12px;
+  display: block;
+  text-transform: uppercase;
+}
+
+.section-title {
+  font-family: var(--display);
+  font-size: clamp(26px, 4vw, 46px);
+  font-weight: 700;
+  line-height: 1.1;
+  margin-bottom: 14px;
+  color: #fff;
+}
+
+.section-title span { color: var(--red); }
+
+.section-line {
+  width: 60px;
+  height: 2px;
+  background: var(--red);
+  margin-bottom: 50px;
+  box-shadow: 0 0 8px rgba(255,0,0,0.6);
+}
+
+/* ─── GALLERY / FIRST ACTIVITY ─────────────────────────────── */
+#activity {
+  background: rgba(255,0,0,0.02);
+}
+
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 24px;
+  margin-top: 10px;
+}
+
+.project-card {
+  background: rgba(10,0,0,0.92);
+  border: 1px solid rgba(255,0,0,0.15);
+  border-radius: 15px;
+  overflow: hidden;
+  text-align: center;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+  transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
+}
+
+.project-card:hover {
+  transform: translateY(-8px);
+  border-color: rgba(255,0,0,0.45);
+  box-shadow: 0 12px 28px rgba(255,0,0,0.18);
+}
+
+.project-img {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  border-bottom: 2px solid rgba(255,0,0,0.5);
+  background: #111;
+}
+
+.project-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease, filter 0.4s ease;
+}
+
+.project-card:hover .project-img img {
+  transform: scale(1.08);
+  filter: brightness(1.1);
+}
+
+.project-body { padding: 16px; }
+
+.project-tag {
+  display: inline-block;
+  font-size: 10px;
+  color: var(--red2);
+  border: 1px solid rgba(255,0,0,0.3);
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-bottom: 10px;
+  font-family: var(--mono);
+  letter-spacing: 1px;
+}
+
+.project-title {
+  font-family: var(--display);
+  font-size: 13px;
+  color: #fff;
+  margin-bottom: 8px;
+}
+
+.project-desc {
+  font-size: 13px;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.6;
+  margin-bottom: 14px;
+  font-family: var(--body);
+}
+
+.project-link {
+  font-size: 10px;
+  color: var(--red2);
+  text-decoration: none;
+  font-family: var(--mono);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+.project-link:hover { color: #fff; }
+
+/* ─── MARSHMALLOW SECTION ──────────────────────────────────── */
+.marshmallow-block {
+  margin-top: 60px;
+  padding: 40px;
+  background: rgba(255,0,0,0.04);
+  border: 1px solid rgba(255,0,0,0.15);
+  border-radius: 14px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: center;
+}
+
+.marshmallow-block .quote-big {
+  font-family: var(--display);
+  font-size: clamp(18px, 2.5vw, 26px);
+  color: var(--red);
+  letter-spacing: 2px;
+  margin-bottom: 20px;
+  text-shadow: 0 0 14px rgba(255,0,0,0.4);
+}
+
+.marshmallow-block p {
+  font-size: 15px;
+  line-height: 1.8;
+  color: rgba(255,255,255,0.6);
+  font-family: var(--body);
+  margin-bottom: 24px;
+}
+
+/* ─── FOOTER ───────────────────────────────────────────────── */
+footer {
+  border-top: 1px solid rgba(255,0,0,0.3);
+  padding: 50px 40px;
+  text-align: center;
+  background: rgba(0,0,0,0.6);
+}
+
+.footer-logo {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--red);
+  letter-spacing: 4px;
+  margin-bottom: 8px;
+  text-shadow: 0 0 20px rgba(255,5,5,0.7);
+}
+
+.footer-sub {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: rgba(255,255,255,0.2);
+  margin-bottom: 24px;
+}
+
+.footer-links {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.footer-links a {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,0.3);
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+.footer-links a:hover { color: var(--red2); }
+
+.footer-copy {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: rgba(255,255,255,0.15);
+  letter-spacing: 1px;
+}
+
+/* ─── ANIMATIONS ───────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ─── RESPONSIVE ───────────────────────────────────────────── */
+@media (max-width: 768px) {
+  nav { padding: 0 20px; }
+  .nav-links { display: none; }
+  .hamburger { display: flex; }
+
+  #home { padding: 100px 20px 60px; }
+  .section { padding: 70px 20px; }
+  .marshmallow-block { grid-template-columns: 1fr; gap: 24px; }
+  footer { padding: 30px 20px; }
+}
+
+@media (max-width: 480px) {
+  .hero-btns { flex-direction: column; align-items: center; }
+}
+
+/* NAV BASE */
+.nav-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+
+  background: linear-gradient(90deg, #000, #0a0a0a);
+  border-bottom: 2px solid #ff0000;
+  box-shadow: 0 0 20px #ff0000;
+}
+
+/* NAV ITEMS */
+.nav-links li {
+  position: relative;
+}
+
+/* LINKS */
+.nav-links a {
+  display: block;
+  padding: 14px 18px;
+  color: #ff3b3b;
+  text-decoration: none;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: 0.25s;
+  position: relative;
+}
+
+/* HOVER EFFECT (CODE-RED GLOW) */
+.nav-links a:hover {
+  background: #1a0000;
+  color: #fff;
+  text-shadow: 0 0 10px red;
+  box-shadow: inset 0 0 10px red;
+}
+
+/* ACTIVE PAGE */
+.nav-links a.active {
+  background: red;
+  color: black;
+  font-weight: bold;
+  box-shadow: 0 0 15px red;
+}
+
+/* =========================
+   DROPDOWN MENU
+========================= */
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+
+  background: #050505;
+  min-width: 45px;
+
+  /* 🔥 SCROLL FEATURE */
+  max-height: 240px;
+  overflow-y: auto;
+
+  border: 1px solid red;
+  box-shadow: 0 0 25px red;
+  z-index: 1000;
+}
+
+/* SHOW DROPDOWN */
+.dropdown.show .dropdown-menu {
+  display: block;
+}
+
+/* DROPDOWN ITEMS */
+.dropdown-menu a {
+  padding: 12px 14px;
+  color: #ff3b3b;
+  display: block;
+  border-bottom: 1px solid #1a0000;
+  transition: 0.2s;
+}
+
+/* hover inside dropdown */
+.dropdown-menu a:hover {
+  background: #300000;
+  color: #fff;
+  text-shadow: 0 0 8px red;
+}
+
+/* =========================
+   SCROLLBAR (RED THEME)
+========================= */
+.dropdown-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb {
+  background: red;
+  box-shadow: 0 0 10px red;
+  border-radius: 10px;
+}
+
+.dropdown-menu::-webkit-scrollbar-track {
+  background: black;
+}
+
+/* =========================
+   ARROW ANIMATION
+========================= */
+.arrow {
+  font-size: 12px;
+  margin-left: 5px;
+  transition: 0.3s;
+  color: red;
+}
+
+.rotate {
+  transform: rotate(180deg);
+}
+
+/* =========================
+   GLITCH EFFECT (CODE-RED FEEL)
+========================= */
+.nav-links a:hover::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 100%;
+  background: red;
+  animation: glitch 0.25s infinite;
+}
+
+@keyframes glitch {
+  0% { transform: translateX(0); opacity: 1; }
+  50% { transform: translateX(2px); opacity: 0.7; }
+  100% { transform: translateX(-2px); opacity: 1; }
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- Custom cursor -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- Matrix background -->
+<canvas id="matrixCanvas"></canvas>
+
+<!-- ─── NAVBAR ──────────────────────────────────────────────── -->
+<nav>
+  <a href="#home" class="nav-logo">
+    <div class="nav-logo-circle">
+      <img src="logo.png" alt="CodeRed Logo">
+    </div>
+    <div class="nav-logo-text">
+      TEAM CODERED
+      <span>TECHNOLOGY RESEARCH</span>
+    </div>
+  </a>
+
+  
+  <ul class="nav-links">
+    <li><a href="index.html" class="active">HOME</a></li>
+    <li><a href="About Us.html">About Us </a></li>
+    <li class="dropdown">
+      <a class="dropdown-toggle" onclick="toggleDrop(event)">ACTIVITY <span class="arrow" id="arrow">▾</span></a>
+      <div class="dropdown-menu" id="dropMenu">
+        <a href="Marshmallow Challenge.html">Marshmallow Challenge</a>
+        <a href="Elevator pitch.html">Elevator Pitch</a>
+        <a href="Website presentation.html">Website Presentation</a>
+        <a href="jeoparody.html">Jeopardy</a>
+        <a href="literature review.html">Literature Review</a>
+        <a href="persona mapping.html">Persona Mapping</a>
+        <a href="STORYBOARD.html">Storyboard</a>
+        <a href="prototype.html">Prototype</a>
+         <a href="IEEE Documentation.html">IEEE Documentation</a>
+      </div>
+    </li>
+  </ul>
+</nav>
+
+  <div class="hamburger" id="hamburger" onclick="toggleHamburger()">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<!-- ─── HERO ────────────────────────────────────────────────── -->
+<section id="home">
+  <p class="hero-eyebrow">TECHNOLOGY RESEARCH CAPSTONE · 2026</p>
+  <h1 class="hero-title">
+    <span class="dim">👨‍💻</span><br>
+    ACTI<span class="red-word">VITY</span>
+  </h1>
+  <p class="hero-sub">Iloilo State University of Fisheries Science and Technology</p>
+
+  <div class="hero-img-wrap">
+    <div class="hero-img-glow"></div>
+    <img src="6.png" alt="Team CodeRed Welcome Banner">
+  </div>
+
+  <div class="hero-btns">
+    <a href="#Marshmallow Challenge.html" class="btn-primary">NEXT ACTIVITIES</a>
+    <a href="About Us.html" class="btn-outline">ABOUT THE TEAM</a>
+  </div>
+
+  <div class="scroll-hint">
+    <span>SCROLL</span>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ─── FIRST ACTIVITY ───────────────────────────────────────── -->
+<div id="activity">
+  <div class="section reveal">
+    <span class="section-label">ACTIVITY 01</span>
+    <h2 class="section-title">FIRST <span>ACTIVITY</span></h2>
+    <div class="section-line"></div>
+
+    <!-- Gallery grid -->
+    <div class="projects-grid">
+      <div class="project-card">
+        <div class="project-img"><img src="12.jpg" alt="Activity Photo 1"></div>
+        <div class="project-body">
+          <span class="project-tag">CHALLENGE</span>
+          <div class="project-title">MARSHMALLOW CHALLENGE</div>
+        </div>
+      </div>
+      <div class="project-card">
+        <div class="project-img"><img src="13.jpg" alt="Activity Photo 2"></div>
+        <div class="project-body">
+          <span class="project-tag">TEAMWORK</span>
+          <div class="project-title">BUILDING TOGETHER</div>
+        </div>
+      </div>
+      <div class="project-card">
+        <div class="project-img"><img src="14.jpg" alt="Activity Photo 3"></div>
+        <div class="project-body">
+          <span class="project-tag">CREATIVITY</span>
+          <div class="project-title">STRUCTURE DESIGN</div>
+        </div>
+      </div>
+      <div class="project-card">
+        <div class="project-img"><img src="15.jpg" alt="Activity Photo 4"></div>
+        <div class="project-body">
+          <span class="project-tag">ENGINEERING</span>
+          <div class="project-title">RAPID PROTOTYPING</div>
+        </div>
+      </div>
+      <div class="project-card">
+        <div class="project-img"><img src="17.jpg" alt="Activity Photo 5"></div>
+        <div class="project-body">
+          <span class="project-tag">RESULTS</span>
+          <div class="project-title">FINAL OUTCOME</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Description block -->
+    <div class="marshmallow-block reveal">
+      <div>
+        <p class="quote-big">"MARSHMALLOW CHALLENGE😎"</p>
+        <p>
+         The Marshmallow Challenge is a team-building activity where my group and I are given spaghetti sticks,
+tape, string, and a marshmallow. We must build the tallest structure with the marshmallow on top.
+This teaches teamwork, creativity, and fast problem-solving.
+        </p>
+        <a href="Marshmallow Challenge.html" class="btn-primary" style="font-size:11px; padding:12px 28px;">
+          NEXT ACTIVITY ➡️
+        </a>
+      </div>
+      <div style="text-align:center;">
+        <img src="17.jpg" alt="Marshmallow Challenge" style="width:100%; max-width:400px; border-radius:10px; border:1px solid rgba(255,0,0,0.35); box-shadow: 0 0 20px rgba(255,0,0,0.15);">
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ─── FOOTER ───────────────────────────────────────────────── -->
+<footer>
+  <div class="footer-logo">TEAM CODERED</div>
+  <div class="footer-sub">TECHNOLOGY RESEARCH CAPSTONE · 2026</div>
+  <div class="footer-links">
+    <a href="index.html">Home</a>
+    <a href="About Us.html">About</a>
+    <a href="Marshmallow Challenge.html">Activities</a>
+  </div>
+  <p class="footer-copy">
+    ILOILO STATE UNIVERSITY OF FISHERIES SCIENCE AND TECHNOLOGY<br>
+    Created by Charles Brian Taberna
+  </p>
+</footer>
+
+<!-- ─── SCRIPTS ──────────────────────────────────────────────── -->
+<script>
+
+   
+function toggleDrop(event) {
+  const dropdown = event.target.closest(".dropdown");
+  const menu = document.getElementById("dropMenu");
+  const arrow = document.getElementById("arrow");
+
+  dropdown.classList.toggle("show");
+  menu.classList.toggle("show");
+  arrow.classList.toggle("rotate");
+}
+
+/* close when clicking outside */
+window.onclick = function(e) {
+  if (!e.target.closest(".dropdown")) {
+    document.querySelector(".dropdown").classList.remove("show");
+    document.getElementById("dropMenu").classList.remove("show");
+    document.getElementById("arrow").classList.remove("rotate");
+  }
+}
+
+/* --- Custom Cursor --- */
+const cursor = document.getElementById('cursor');
+const ring   = document.getElementById('cursorRing');
+let mx = 0, my = 0, rx = 0, ry = 0;
+
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cursor.style.left = mx + 'px';
+  cursor.style.top  = my + 'px';
+});
+
+(function animRing() {
+  rx += (mx - rx) * 0.12;
+  ry += (my - ry) *.12;
+  ring.style.left = rx + 'px';
+  ring.style.top  = ry + 'px';
+  requestAnimationFrame(animRing);
+})();
+
+document.querySelectorAll('a, button, .project-card').forEach(el => {
+  el.addEventListener('mouseenter', () => {
+    cursor.style.width = '20px'; cursor.style.height = '20px';
+    ring.style.width   = '52px'; ring.style.height   = '52px';
+  });
+  el.addEventListener('mouseleave', () => {
+    cursor.style.width = '12px'; cursor.style.height = '12px';
+    ring.style.width   = '36px'; ring.style.height   = '36px';
+  });
+});
+
+/* --- Matrix Canvas --- */
+const canvas = document.getElementById('matrixCanvas');
+const ctx    = canvas.getContext('2d');
+
+function resizeMatrix() {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeMatrix();
+window.addEventListener('resize', resizeMatrix);
+
+const cols = Math.floor(window.innerWidth / 20);
+const drops = Array(cols).fill(1);
+const chars = 'CODERED01dknaskdasdasdasasdasda'.split('');
+
+function drawMatrix() {
+  ctx.fillStyle = 'rgba(8,0,0,0.05)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#ff1a1a';
+  ctx.font = '14px Share Tech Mono, monospace';
+
+  drops.forEach((y, i) => {
+    const ch = chars[Math.floor(Math.random() * chars.length)];
+    ctx.fillText(ch, i * 20, y * 20);
+    if (y * 20 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+    drops[i]++;
+  });
+}
+setInterval(drawMatrix, 50);
+
+/* --- Dropdown --- */
+function toggleMenu() {
+  document.getElementById('dropdownMenu').classList.toggle('show');
+  document.getElementById('arrow').classList.toggle('rotate');
+}
+window.addEventListener('click', e => {
+  if (!e.target.closest('.dropdown')) {
+    document.getElementById('dropdownMenu').classList.remove('show');
+    document.getElementById('arrow').classList.remove('rotate');
+  }
+});
+
+/* --- Hamburger --- */
+function toggleHamburger() {
+  document.getElementById('hamburger').classList.toggle('open');
+}
+
+/* --- Scroll Reveal --- */
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.12 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+/* --- Three.js Particle Net (background supplement) --- */
+(function() {
+  if (!window.THREE) return;
+
+  const scene    = new THREE.Scene();
+  const camera   = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  const c = renderer.domElement;
+  c.style.cssText = 'position:fixed;top:0;left:0;z-index:-1;pointer-events:none;';
+  document.body.appendChild(c);
+  camera.position.z = 6;
+
+  const COUNT = 280, MAX_DIST = 1.5;
+  const pos = new Float32Array(COUNT * 3);
+  const vel = new Float32Array(COUNT * 3);
+
+  for (let i = 0; i < COUNT * 3; i += 3) {
+    pos[i]   = (Math.random() - 0.5) * 10;
+    pos[i+1] = (Math.random() - 0.5) * 10;
+    pos[i+2] = (Math.random() - 0.5) * 10;
+    vel[i]   = (Math.random() - 0.5) * 0.018;
+    vel[i+1] = (Math.random() - 0.5) * 0.018;
+    vel[i+2] = (Math.random() - 0.5) * 0.018;
+  }
+
+  const ptGeo = new THREE.BufferGeometry();
+  ptGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const particles = new THREE.Points(ptGeo, new THREE.PointsMaterial({ color: 0xff1a1a, size: 0.045, transparent: true, opacity: 0.85 }));
+  scene.add(particles);
+
+  const lnGeo  = new THREE.BufferGeometry();
+  const lnPos  = new Float32Array(COUNT * COUNT * 3);
+  lnGeo.setAttribute('position', new THREE.BufferAttribute(lnPos, 3));
+  const lines  = new THREE.LineSegments(lnGeo, new THREE.LineBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.12 }));
+  scene.add(lines);
+
+  function animate() {
+    requestAnimationFrame(animate);
+    for (let i = 0; i < COUNT * 3; i += 3) {
+      pos[i] += vel[i]; pos[i+1] += vel[i+1]; pos[i+2] += vel[i+2];
+      for (let j = 0; j < 3; j++) if (pos[i+j] > 5 || pos[i+j] < -5) vel[i+j] *= -1;
+    }
+    ptGeo.attributes.position.needsUpdate = true;
+
+    let idx = 0;
+    for (let i = 0; i < COUNT; i++) {
+      for (let j = i+1; j < COUNT; j++) {
+        const dx = pos[i*3]-pos[j*3], dy = pos[i*3+1]-pos[j*3+1], dz = pos[i*3+2]-pos[j*3+2];
+        if (Math.sqrt(dx*dx+dy*dy+dz*dz) < MAX_DIST) {
+          lnPos[idx++]=pos[i*3]; lnPos[idx++]=pos[i*3+1]; lnPos[idx++]=pos[i*3+2];
+          lnPos[idx++]=pos[j*3]; lnPos[idx++]=pos[j*3+1]; lnPos[idx++]=pos[j*3+2];
+        }
+      }
+    }
+    lnGeo.setDrawRange(0, idx/3);
+    lnGeo.attributes.position.needsUpdate = true;
+
+    particles.rotation.y += 0.001;
+    lines.rotation.y     += 0.001;
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+})();
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+
+</body>
+</html>

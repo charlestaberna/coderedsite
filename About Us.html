@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TEAM CODE RED — Technology Research Capstone</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── RESET ─────────────────────────────────── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --red:      #ff0000;
+  --red-dim:  #cc0000;
+  --red-glow: rgba(255,0,0,0.35);
+  --bg:       #050000;
+  --bg2:      #0a0000;
+  --surface:  rgba(255,0,0,0.04);
+  --border:   rgba(255,0,0,0.18);
+  --text:     #f0f0f0;
+  --muted:    rgba(255,255,255,0.45);
+  --mono:     'Share Tech Mono', monospace;
+  --display:  'Orbitron', monospace;
+  --body:     'Rajdhani', sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body);
+  overflow-x: hidden;
+  cursor: none;
+  min-height: 100vh;
+}
+
+/* ── SCANLINE OVERLAY ───────────────────────── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg, transparent, transparent 3px,
+    rgba(0,0,0,0.07) 3px, rgba(0,0,0,0.07) 4px
+  );
+  pointer-events: none;
+  z-index: 9900;
+}
+
+/* ── MATRIX CANVAS ──────────────────────────── */
+#matrixCanvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: -1;
+  opacity: 0.13;
+}
+
+/* ── CUSTOM CURSOR ──────────────────────────── */
+.cursor {
+  position: fixed;
+  width: 10px; height: 10px;
+  background: var(--red);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%,-50%);
+  transition: width .15s, height .15s;
+  mix-blend-mode: screen;
+  box-shadow: 0 0 8px var(--red);
+}
+.cursor-ring {
+  position: fixed;
+  width: 32px; height: 32px;
+  border: 1px solid rgba(255,0,0,0.6);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9998;
+  transform: translate(-50%,-50%);
+  transition: transform .12s, width .2s, height .2s;
+}
+
+/* ── NAVBAR ─────────────────────────────────── */
+nav.topbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 1000;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  background: rgba(4,0,0,0.94);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(14px);
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+
+.nav-logo-ring {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--red);
+  background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 0 14px var(--red-glow);
+}
+
+.nav-logo-ring img {
+  width: 115%; height: 115%;
+  object-fit: contain;
+}
+
+.nav-brand-text {
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  color: #fff;
+  line-height: 1.1;
+}
+
+.nav-brand-text small {
+  display: block;
+  font-size: 8px;
+  color: var(--red);
+  letter-spacing: 4px;
+  font-weight: 400;
+}
+
+.nav-links {
+  display: flex;
+  gap: 2px;
+  list-style: none;
+}
+
+.nav-links a {
+  font-family: var(--mono);
+  font-size: 14px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-decoration: none;
+  padding: 7px 14px;
+  border-radius: 3px;
+  transition: color .2s, background .2s;
+  position: relative;
+}
+
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  bottom: 2px; left: 14px; right: 14px;
+  height: 1px;
+  background: var(--red);
+  transform: scaleX(0);
+  transition: transform .2s;
+}
+
+.nav-links a:hover { color: #fff; }
+.nav-links a:hover::after { transform: scaleX(1); }
+.nav-links a.active { color: var(--red); background: var(--surface); }
+
+/* Dropdown */
+.dropdown { position: relative; }
+.dropbtn { cursor: pointer; }
+.dropdown-content {
+  display: none;
+  position: absolute;
+  top: 40px; right: 0;
+  background: rgba(8,0,0,0.98);
+  border: 1px solid var(--border);
+  box-shadow: 0 0 24px rgba(255,0,0,0.15);
+  flex-direction: column;
+  min-width: 200px;
+  z-index: 999;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.dropdown-content.show { display: flex; }
+.dropdown-content a {
+  padding: 11px 16px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--muted);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  transition: .2s;
+}
+.dropdown-content a:hover {
+  background: var(--surface);
+  border-left-color: var(--red);
+  color: #fff;
+  padding-left: 22px;
+}
+.arrow { display: inline-block; transition: .3s; font-size: 9px; }
+.arrow.rotate { transform: rotate(180deg); }
+
+/* ── HERO ───────────────────────────────────── */
+#hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100px 40px 60px;
+  text-align: center;
+  position: relative;
+}
+
+.hero-tag {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 6px;
+  color: var(--red);
+  margin-bottom: 22px;
+  opacity: 0;
+  animation: fadeUp .7s .1s ease forwards;
+}
+
+.hero-title {
+  font-family: var(--display);
+  font-size: clamp(48px, 10vw, 110px);
+  font-weight: 900;
+  line-height: .9;
+  letter-spacing: -3px;
+  margin-bottom: 8px;
+  opacity: 0;
+  animation: fadeUp .7s .2s ease forwards;
+}
+
+.hero-title .dim { color: rgba(255,255,255,0.1); }
+.hero-title .white { color: #fff; }
+.hero-title .red {
+  color: var(--red);
+  text-shadow: 0 0 30px rgba(255,0,0,0.7), 0 0 60px rgba(255,0,0,0.3);
+  animation: redPulse 3s ease-in-out infinite;
+}
+
+@keyframes redPulse {
+  0%,100% { text-shadow: 0 0 30px rgba(255,0,0,.7), 0 0 60px rgba(255,0,0,.3); }
+  50%      { text-shadow: 0 0 60px rgba(255,0,0,1), 0 0 100px rgba(255,0,0,.5); }
+}
+
+.hero-sub {
+  font-family: var(--body);
+  font-size: 16px;
+  color: var(--muted);
+  letter-spacing: 2px;
+  margin-bottom: 50px;
+  opacity: 0;
+  animation: fadeUp .7s .3s ease forwards;
+}
+
+/* Hero image */
+.hero-img-wrap {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 48px;
+  opacity: 0;
+  animation: fadeUp .7s .4s ease forwards;
+}
+
+.hero-img-wrap img {
+  width: min(900px, 85vw);
+  height: auto;
+  border-radius: 10px;
+  border: 1px solid rgba(255,0,0,0.35);
+  display: block;
+  position: relative;
+  z-index: 1;
+}
+
+.hero-img-glow {
+  position: absolute;
+  inset: -40px;
+  background: radial-gradient(ellipse, rgba(255,0,0,0.12) 0%, transparent 70%);
+  z-index: 0;
+  animation: breathe 4s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%,100% { transform: scale(1); opacity: .5; }
+  50%      { transform: scale(1.04); opacity: 1; }
+}
+
+/* Corner brackets */
+.hero-img-wrap::before,
+.hero-img-wrap::after {
+  content: '';
+  position: absolute;
+  width: 28px; height: 28px;
+  z-index: 2;
+}
+.hero-img-wrap::before {
+  top: -4px; left: -4px;
+  border-top: 2px solid var(--red);
+  border-left: 2px solid var(--red);
+}
+.hero-img-wrap::after {
+  bottom: -4px; right: -4px;
+  border-bottom: 2px solid var(--red);
+  border-right: 2px solid var(--red);
+}
+
+/* CTA buttons */
+.hero-cta {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  opacity: 0;
+  animation: fadeUp .7s .5s ease forwards;
+}
+
+.btn-red {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #000;
+  background: var(--red);
+  border: 2px solid var(--red);
+  padding: 13px 30px;
+  border-radius: 3px;
+  text-decoration: none;
+  transition: all .2s;
+  display: inline-block;
+  font-weight: 700;
+}
+
+.btn-red:hover {
+  background: #ff3333;
+  box-shadow: 0 0 28px rgba(255,0,0,.7);
+  letter-spacing: 3px;
+}
+
+.btn-ghost {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #fff;
+  background: transparent;
+  border: 2px solid rgba(255,255,255,0.18);
+  padding: 13px 30px;
+  border-radius: 3px;
+  text-decoration: none;
+  transition: all .2s;
+  display: inline-block;
+}
+
+.btn-ghost:hover {
+  border-color: var(--red);
+  color: var(--red);
+  box-shadow: 0 0 18px rgba(255,0,0,.18);
+  letter-spacing: 3px;
+}
+
+/* Scroll hint */
+.scroll-hint {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  opacity: .35;
+  animation: scrollBounce 2.2s ease-in-out infinite;
+}
+.scroll-hint span {
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 4px;
+  color: var(--red);
+}
+.scroll-hint::after {
+  content: '';
+  width: 1px; height: 36px;
+  background: linear-gradient(to bottom, var(--red), transparent);
+}
+@keyframes scrollBounce {
+  0%,100% { transform: translateX(-50%) translateY(0); }
+  50%      { transform: translateX(-50%) translateY(8px); }
+}
+
+/* ── DIVIDER ────────────────────────────────── */
+.divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,0,0,.25), transparent);
+}
+
+/* ── SECTION BASE ───────────────────────────── */
+.section {
+  padding: 90px 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section-eyebrow {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 5px;
+  color: var(--red);
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.section-title {
+  font-family: var(--display);
+  font-size: clamp(26px, 4vw, 46px);
+  font-weight: 700;
+  line-height: 1.05;
+  color: #fff;
+  margin-bottom: 14px;
+}
+
+.section-title span { color: var(--red); }
+
+.section-rule {
+  width: 56px; height: 2px;
+  background: var(--red);
+  box-shadow: 0 0 8px rgba(255,0,0,.6);
+  margin-bottom: 48px;
+}
+
+/* ── QUOTE BANNER ───────────────────────────── */
+.motto-banner {
+  text-align: center;
+  padding: 60px 40px;
+  position: relative;
+}
+
+.motto-banner .quote-text {
+  font-family: var(--display);
+  font-size: clamp(18px, 3vw, 34px);
+  color: #fff;
+  letter-spacing: 1px;
+  position: relative;
+  display: inline-block;
+  padding: 24px 40px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.motto-banner .quote-text span { color: var(--red); }
+
+.motto-banner .quote-text::before,
+.motto-banner .quote-text::after {
+  content: '';
+  position: absolute;
+  width: 20px; height: 20px;
+}
+.motto-banner .quote-text::before { top: -2px; left: -2px; border-top: 2px solid var(--red); border-left: 2px solid var(--red); }
+.motto-banner .quote-text::after  { bottom: -2px; right: -2px; border-bottom: 2px solid var(--red); border-right: 2px solid var(--red); }
+
+/* ── TEAM MEMBERS ───────────────────────────── */
+.members-section {
+  padding: 80px 40px;
+  background: var(--bg2);
+}
+
+.members-grid {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.member-card {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 28px;
+  background: rgba(255,0,0,0.025);
+  transition: border-color .3s, box-shadow .3s;
+  position: relative;
+}
+
+.member-card:hover {
+  border-color: rgba(255,0,0,.45);
+  box-shadow: 0 0 40px rgba(255,0,0,.08);
+}
+
+/* alternating layout */
+.member-card.flip {
+  grid-template-columns: 1fr 260px;
+}
+.member-card.flip .member-img { order: 2; }
+.member-card.flip .member-info { order: 1; }
+
+.member-img {
+  position: relative;
+  overflow: hidden;
+  background: #0a0000;
+}
+
+.member-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+  min-height: 260px;
+  filter: grayscale(20%);
+  transition: filter .4s;
+}
+
+.member-card:hover .member-img img { filter: grayscale(0%); }
+
+.member-img::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,0,0,0.12), transparent);
+  pointer-events: none;
+}
+
+.member-info {
+  padding: 36px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 14px;
+}
+
+.member-role {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: var(--red);
+  text-transform: uppercase;
+}
+
+.member-role::before {
+  content: '// ';
+  opacity: .4;
+}
+
+.member-name {
+  font-family: var(--display);
+  font-size: clamp(20px, 2.5vw, 30px);
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.1;
+}
+
+.member-bio {
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.75;
+  color: rgba(255,255,255,0.6);
+  max-width: 560px;
+}
+
+.member-bio strong { color: rgba(255,80,80,.9); }
+
+.member-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--red);
+  border: 1px solid rgba(255,0,0,.3);
+  padding: 5px 12px;
+  border-radius: 20px;
+  background: rgba(255,0,0,.04);
+  width: fit-content;
+}
+
+.member-badge::before {
+  content: '';
+  width: 6px; height: 6px;
+  background: var(--red);
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--red);
+  animation: blink 1.4s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%,100% { opacity: 1; }
+  50%      { opacity: .2; }
+}
+
+/* ── NAME / STORY PANELS ────────────────────── */
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.info-panel {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 36px;
+  background: rgba(255,0,0,0.025);
+  position: relative;
+  overflow: hidden;
+  transition: border-color .3s, box-shadow .3s;
+}
+
+.info-panel:hover {
+  border-color: rgba(255,0,0,.4);
+  box-shadow: 0 0 30px rgba(255,0,0,.07);
+}
+
+.info-panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 3px; height: 100%;
+  background: linear-gradient(to bottom, var(--red), transparent);
+  opacity: .6;
+}
+
+.info-panel-img {
+  width: 100%;
+  max-width: 160px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  margin-bottom: 20px;
+  display: block;
+}
+
+.info-panel h3 {
+  font-family: var(--display);
+  font-size: 16px;
+  color: var(--red);
+  letter-spacing: 2px;
+  margin-bottom: 14px;
+}
+
+.info-panel p {
+  font-family: var(--body);
+  font-size: 14.5px;
+  line-height: 1.78;
+  color: rgba(255,255,255,0.6);
+}
+
+/* ── TEAM FULL IMAGE ────────────────────────── */
+.team-full {
+  text-align: center;
+  padding: 80px 40px;
+}
+
+.team-full img {
+  width: min(1000px, 90vw);
+  height: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(255,0,0,.35);
+  box-shadow: 0 0 40px rgba(255,0,0,.14);
+  display: block;
+  margin: 30px auto 0;
+}
+
+/* ── LOGO MEANING ───────────────────────────── */
+.logo-section {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 80px 40px;
+}
+
+.logo-inner {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 48px;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 48px;
+  background: var(--surface);
+}
+
+.logo-inner img {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+.logo-inner h4 {
+  font-family: var(--display);
+  font-size: clamp(18px, 2vw, 26px);
+  color: #fff;
+  margin-bottom: 18px;
+}
+.logo-inner h4 span { color: var(--red); }
+
+.logo-inner p {
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.8;
+  color: rgba(255,255,255,.58);
+}
+
+/* ── FOOTER ─────────────────────────────────── */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 48px 40px;
+  text-align: center;
+  background: rgba(0,0,0,.6);
+}
+
+.footer-logo {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--red);
+  letter-spacing: 5px;
+  margin-bottom: 6px;
+  text-shadow: 0 0 20px rgba(255,0,0,.5);
+}
+
+.footer-sub {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 4px;
+  color: rgba(255,255,255,.18);
+  margin-bottom: 28px;
+}
+
+.footer-links {
+  display: flex;
+  gap: 28px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.footer-links a {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,.28);
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: color .2s;
+}
+.footer-links a:hover { color: var(--red); }
+
+.footer-copy {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: rgba(255,255,255,.12);
+  letter-spacing: 1px;
+}
+
+/* ── REVEAL ANIMATION ───────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity .6s ease, transform .6s ease;
+}
+.reveal.visible { opacity: 1; transform: none; }
+
+/* ── KEYFRAMES ──────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ── RESPONSIVE ─────────────────────────────── */
+@media (max-width: 768px) {
+  nav.topbar { padding: 0 20px; }
+  .nav-links { display: none; }
+
+  .member-card,
+  .member-card.flip { grid-template-columns: 1fr; }
+  .member-card.flip .member-img { order: 0; }
+  .member-card.flip .member-info { order: 1; }
+  .member-img img { min-height: 200px; }
+
+  .info-grid { grid-template-columns: 1fr; }
+  .logo-inner { grid-template-columns: 1fr; }
+  .logo-inner img { max-width: 180px; margin: 0 auto; }
+
+  .section { padding: 60px 20px; }
+  .members-section { padding: 60px 20px; }
+}
+
+/* NAV BASE */
+.nav-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+
+  background: linear-gradient(90deg, #000, #0a0a0a);
+  border-bottom: 2px solid #ff0000;
+  box-shadow: 0 0 20px #ff0000;
+}
+
+/* NAV ITEMS */
+.nav-links li {
+  position: relative;
+}
+
+/* LINKS */
+.nav-links a {
+  display: block;
+  padding: 14px 18px;
+  color: #ff3b3b;
+  text-decoration: none;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: 0.25s;
+  position: relative;
+}
+
+/* HOVER EFFECT (CODE-RED GLOW) */
+.nav-links a:hover {
+  background: #1a0000;
+  color: #fff;
+  text-shadow: 0 0 10px red;
+  box-shadow: inset 0 0 10px red;
+}
+
+/* ACTIVE PAGE */
+.nav-links a.active {
+  background: red;
+  color: black;
+  font-weight: bold;
+  box-shadow: 0 0 15px red;
+}
+
+/* =========================
+   DROPDOWN MENU
+========================= */
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+
+  background: #050505;
+  min-width: 45px;
+
+  /* 🔥 SCROLL FEATURE */
+  max-height: 240px;
+  overflow-y: auto;
+
+  border: 1px solid red;
+  box-shadow: 0 0 25px red;
+  z-index: 1000;
+}
+
+/* SHOW DROPDOWN */
+.dropdown.show .dropdown-menu {
+  display: block;
+}
+
+/* DROPDOWN ITEMS */
+.dropdown-menu a {
+  padding: 12px 14px;
+  color: #ff3b3b;
+  display: block;
+  border-bottom: 1px solid #1a0000;
+  transition: 0.2s;
+}
+
+/* hover inside dropdown */
+.dropdown-menu a:hover {
+  background: #300000;
+  color: #fff;
+  text-shadow: 0 0 8px red;
+}
+
+/* =========================
+   SCROLLBAR (RED THEME)
+========================= */
+.dropdown-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb {
+  background: red;
+  box-shadow: 0 0 10px red;
+  border-radius: 10px;
+}
+
+.dropdown-menu::-webkit-scrollbar-track {
+  background: black;
+}
+
+/* =========================
+   ARROW ANIMATION
+========================= */
+.arrow {
+  font-size: 12px;
+  margin-left: 5px;
+  transition: 0.3s;
+  color: red;
+}
+
+.rotate {
+  transform: rotate(180deg);
+}
+
+/* =========================
+   GLITCH EFFECT (CODE-RED FEEL)
+========================= */
+.nav-links a:hover::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 100%;
+  background: red;
+  animation: glitch 0.25s infinite;
+}
+
+@keyframes glitch {
+  0% { transform: translateX(0); opacity: 1; }
+  50% { transform: translateX(2px); opacity: 0.7; }
+  100% { transform: translateX(-2px); opacity: 1; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- Cursor -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- Matrix Canvas -->
+<canvas id="matrixCanvas"></canvas>
+
+<!-- ── NAVBAR ── -->
+<nav class="topbar">
+  <a href="#hero" class="nav-brand">
+    <div class="nav-logo-ring">
+      <img src="logo.png" alt="Code Red Logo"
+        onerror="this.parentElement.innerHTML='<span style=\'font-family:Orbitron,monospace;font-size:13px;font-weight:900;color:#ff0000;\'>CR</span>'">
+    </div>
+    <div class="nav-brand-text">
+      CODE-RED
+      <small>TECH CAPSTONE</small>
+    </div>
+  </a>
+
+  
+  <ul class="nav-links">
+    <li><a href="index.html" class="active">HOME</a></li>
+    <li><a href="About Us.html">About Us </a></li>
+    <li class="dropdown">
+      <a class="dropdown-toggle" onclick="toggleDrop(event)">ACTIVITY <span class="arrow" id="arrow">▾</span></a>
+      <div class="dropdown-menu" id="dropMenu">
+        <a href="Marshmallow Challenge.html">Marshmallow Challenge</a>
+        <a href="Elevator pitch.html">Elevator Pitch</a>
+        <a href="Website presentation.html">Website Presentation</a>
+        <a href="jeoparody.html">Jeopardy</a>
+        <a href="literature review.html">Literature Review</a>
+        <a href="persona mapping.html">Persona Mapping</a>
+        <a href="STORYBOARD.html">Storyboard</a>
+        <a href="prototype.html">Prototype</a>
+         <a href="IEEE Documentation.html">IEEE Documentation</a>
+      </div>
+    </li>
+  </ul>
+</nav>
+
+<!-- ── HERO ── -->
+<section id="hero">
+  <div class="hero-tag">Technology Research Capstone · 2026</div>
+
+  <h1 class="hero-title">
+    <span class="dim">TEAM</span><br>
+    <span class="white">CODE</span><span class="red">-RED</span>
+  </h1>
+
+  <p class="hero-sub">Institution &nbsp;·&nbsp; 2026</p>
+
+  <div class="hero-img-wrap">
+    <div class="hero-img-glow"></div>
+    <img src="6.png" alt="Team Code Red Banner"
+      onerror="this.style.cssText='min-width:500px;min-height:220px;background:rgba(255,0,0,0.04);border-radius:10px;display:block;'">
+  </div>
+
+  <div class="hero-cta">
+    <a href="Activity.html" class="btn-red">procced to Activity</a>
+    <a href="#name-story" class="btn-ghost">Our Story</a>
+  </div>
+
+  <div class="scroll-hint"><span>SCROLL</span></div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── MOTTO ── -->
+<div class="motto-banner reveal">
+  <div class="quote-text">
+    	LET'S GET TO KNOW MORE  <span>ABOUT THIS</span>TEAM!
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ── MEET THE TEAM (full photo) ── -->
+<section id="team" class="team-full reveal">
+  <span class="section-eyebrow">THE TEAM</span>
+  <div class="section-rule" style="margin:0 auto 0;"></div>
+  <img src="5.png" alt="Team Code Red"
+    onerror="this.style.cssText='min-height:200px;background:rgba(255,0,0,0.04);border-radius:12px;display:block;margin:30px auto 0;width:min(1000px,90vw);'">
+  <p style="margin-top:22px;font-family:var(--body);font-size:16px;color:var(--muted);letter-spacing:1px;">
+    Team Code Red — my role is mission success, 
+  </p>
+   <h2 class="section-title">Meet The <span>Team</span></h2>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── MEMBERS ── -->
+<section class="members-section">
+  <div style="max-width:1100px;margin:0 auto 48px;">
+    <span class="section-eyebrow reveal">first THE MEMBERS</span>
+    <h2 class="section-title reveal">The <span>People</span> Behind The Code</h2>
+    <div class="section-rule reveal"></div>
+  </div>
+
+  <div class="members-grid">
+
+    <!-- HACKER -->
+    <div class="member-card reveal">
+      <div class="member-img">
+        <img src="7.png" alt="Sedrika Quidan">
+      </div>
+      <div class="member-info">
+        <span class="member-role">Hacker👩‍💻</span>
+        <h2 class="member-name">Oh, hi! this is Sedrika B. Quidan,</h2>
+        <h2><p class="member-bio">
+          the hacker of this team. I am responsible for analyzing systems, identifying possible weaknesses, and thinking like a problem-solver. I help ensure that our project is secure, efficient, and protected from errors by testing features and finding solutions before problem occurs. My role focuses on ethical hacking, logic,and criticical thinking to improve system reliability.
+        </p></h2>
+        <div class="member-badge">ACTIVE</div>
+      </div>
+    </div>
+
+    <!-- HIPSTER -->
+    <div class="member-card flip reveal">
+      <div class="member-img">
+        <img src="c.png" alt="Charles Brian Taberna">
+      </div>
+      <div class="member-info">
+        <span class="member-role">Hipster👨‍💻</span>
+        <h2 class="member-name">Hi! I'm the Hipster, Charles Brian Taberna</h2>
+       <h2><p class="member-bio">
+          I'm the creative side of the team. I focus on design, visuals, and style to make sure our website looks clean, modern, and interesting. I enjoy turning ideas into visuals and helping our project stand out through creativity and good design. 
+        </p></h2>
+        <div class="member-badge">ACTIVE</div>
+      </div>
+    </div>
+
+    <!-- HUSTLER -->
+    <div class="member-card reveal">
+      <div class="member-img">
+        <img src="k.png" alt="Camille Rose Palomaria">
+      </div>
+      <div class="member-info">
+        <span class="member-role">Hustler💁‍♀️</span>
+        <h2 class="member-name">Hi! this is Camille Rose Palomaria</h2>
+        <p class="member-bio">
+          the Hustler of the group. I'm the one who keeps the team moving. I help organize tasks, manage time, and make sure everyone stays on track, especially when deadline are close. I'm always ready to step in, support my teammates, and push the group to give their best. My role is about effort, responsibility, and turning our plans into real results.
+        </p>
+        <div class="member-badge">ACTIVE</div>
+      </div>
+    </div>
+
+    <!-- HANDLER -->
+    <div class="member-card flip reveal">
+      <div class="member-img">
+        <img src="h.png" alt="Reinheart Pecasis">
+      </div>
+      <div class="member-info">
+        <span class="member-role">Handler🧏‍♀️</span>
+        <h2 class="member-name">Hi! and I'm Reinheart Pecasis</h2>
+        <p class="member-bio">
+          the Handler of the group. The one who keeps things organized and under control. I help manage communication, check progress, and make sure tasks are clear and properly handled. When problems come up, I stay calm, help the team adjust, and make sure everything runs smoothly. My role is about coordination, responsibility, and keeping the team connected. 
+        </p>
+        <div class="member-badge">ACTIVE</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── NAME & STORY ── -->
+<section id="name-story">
+  <div class="section reveal">
+    <span class="section-eyebrow">// 02 — ORIGIN</span>
+    <h2 class="section-title">Meaning &amp; Story Behind <span>Our Name</span></h2>
+    <div class="section-rule"></div>
+
+    <div class="info-grid">
+      <div class="info-panel reveal">
+        <img src="e.png" alt="Stranger Things" class="info-panel-img"
+          onerror="this.style.display='none'">
+        <h3>The Story Behind Our Group Name</h3>
+        <p>
+          The group name was chosen by one of our members who is a fan of <em>Stranger Things</em>. In the show, four boys demonstrate strong teamwork and loyalty during urgent and dangerous situations — supporting each other without hesitation. This inspired us to adopt the same mindset in our research work. Just like in the series, Team Code Red aims to be dependable and united. Through this name, we remind ourselves to stay committed, cooperative, and cautious in completing our research successfully.
+        </p>
+      </div>
+
+      <div class="info-panel reveal">
+        <img src="code.png" alt="Code Red Meaning" class="info-panel-img"
+          onerror="this.style.display='none'">
+        <h3>Meaning of the Group Name</h3>
+        <p>
+          The group name was chosen by one of our members who is a fan of the series 'Stranger Things'. In the show, the group of four boys demonstrates strong and tough teamwork and loyalty especially during urgent and dangerous situations. Whenever something serious happens, they support one another without hesitation. This inspired us to adopt the same mindset in our research work. Just like in the series, Team Code Red aims to be dependable and united. When one member needs help, the group responds right away. Through this name, we remind ourselves to stay committed, cooperative, and cautious in completing our research successfully.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<div class="divider"></div>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="footer-logo">CODE-RED</div>
+  <div class="footer-sub">Technology Research Capstone · 2026</div>
+  <div class="footer-links">
+    <a href="#hero">Home</a>
+    <a href="#team">Team</a>
+    <a href="#name-story">Story</a>
+    <a href="About Us.html">About</a>
+  </div>
+  <div class="footer-copy">© 2026 Team Code-Red. All rights reserved.</div>
+</footer>
+
+<!-- ── SCRIPTS ── -->
+<script>
+
+   
+function toggleDrop(event) {
+  const dropdown = event.target.closest(".dropdown");
+  const menu = document.getElementById("dropMenu");
+  const arrow = document.getElementById("arrow");
+
+  dropdown.classList.toggle("show");
+  menu.classList.toggle("show");
+  arrow.classList.toggle("rotate");
+}
+
+/* close when clicking outside */
+window.onclick = function(e) {
+  if (!e.target.closest(".dropdown")) {
+    document.querySelector(".dropdown").classList.remove("show");
+    document.getElementById("dropMenu").classList.remove("show");
+    document.getElementById("arrow").classList.remove("rotate");
+  }
+}
+
+/* Matrix Rain */
+const canvas = document.getElementById('matrixCanvas');
+const ctx = canvas.getContext('2d');
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+const chars = 'sjadasdhahdasdasjABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<>{}[]#@!%$';
+const fs = 14;
+let cols = Math.floor(canvas.width / fs);
+let drops = Array(cols).fill(1);
+
+function drawMatrix() {
+  ctx.fillStyle = 'rgba(0,0,0,0.05)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  for (let i = 0; i < drops.length; i++) {
+    const c = chars[Math.floor(Math.random() * chars.length)];
+    ctx.fillStyle = i % 4 === 0 ? '#ff4444' : '#aa0000';
+    ctx.font = fs + 'px Share Tech Mono, monospace';
+    ctx.fillText(c, i * fs, drops[i] * fs);
+    if (drops[i] * fs > canvas.height && Math.random() > 0.975) drops[i] = 0;
+    drops[i]++;
+  }
+}
+window.addEventListener('resize', () => {
+  cols = Math.floor(canvas.width / fs);
+  drops = Array(cols).fill(1);
+});
+setInterval(drawMatrix, 50);
+
+/* Custom Cursor */
+const cur = document.getElementById('cursor');
+const ring = document.getElementById('cursorRing');
+let mx = 0, my = 0, rx = 0, ry = 0;
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cur.style.left = mx + 'px'; cur.style.top = my + 'px';
+});
+(function animRing() {
+  rx += (mx - rx) * .13; ry += (my - ry) * .13;
+  ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+  requestAnimationFrame(animRing);
+})();
+document.querySelectorAll('a, button, .member-card, .info-panel').forEach(el => {
+  el.addEventListener('mouseenter', () => {
+    cur.style.width = '18px'; cur.style.height = '18px';
+    ring.style.width = '50px'; ring.style.height = '50px';
+  });
+  el.addEventListener('mouseleave', () => {
+    cur.style.width = '10px'; cur.style.height = '10px';
+    ring.style.width = '32px'; ring.style.height = '32px';
+  });
+});
+
+/* Scroll Reveal */
+const reveals = document.querySelectorAll('.reveal');
+const obs = new IntersectionObserver(entries => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) setTimeout(() => e.target.classList.add('visible'), i * 60);
+  });
+}, { threshold: 0.08 });
+reveals.forEach(el => obs.observe(el));
+
+/* Dropdown */
+function toggleDropdown() {
+  document.getElementById('dropdownMenu').classList.toggle('show');
+  document.getElementById('arrow').classList.toggle('rotate');
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('.dropdown')) {
+    document.getElementById('dropdownMenu').classList.remove('show');
+    document.getElementById('arrow').classList.remove('rotate');
+  }
+});
+</script>
+</body>
+</html>
